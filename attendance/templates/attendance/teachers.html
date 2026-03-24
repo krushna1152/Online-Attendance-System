@@ -1,0 +1,61 @@
+{% extends "attendance/base.html" %}
+{% block title %}Teachers — EduTrack{% endblock %}
+{% block content %}
+<style>
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;--green:#4caf82;--blue:#5b8dee;}
+body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+.page{max-width:1000px;margin:0 auto;padding:40px 24px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;animation:fadeUp .4s ease both;}
+.page-header h1{font-family:'Playfair Display',serif;font-size:24px;}
+.page-header p{font-size:13px;color:var(--muted);}
+.btn-gold{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:13px;border:none;border-radius:10px;padding:10px 20px;cursor:pointer;text-decoration:none;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;animation:fadeUp .5s ease both;animation-delay:.1s;}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;}
+.tbl th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;}
+.tbl td{padding:13px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(201,168,76,0.03);}
+.avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,0.3);}
+.av-ph{width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,0.12);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--accent);}
+.admin-badge{font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(201,168,76,0.15);color:var(--accent);font-weight:600;}
+.act-btn{border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .2s;}
+.act-btn:hover{opacity:.8;}
+.btn-edit{background:rgba(91,141,238,0.15);color:var(--blue);}
+.btn-del{background:rgba(224,92,92,0.15);color:var(--red);}
+.empty{text-align:center;padding:40px 0;color:var(--muted);}
+</style>
+<div class="page">
+  <div class="page-header">
+    <div><h1>👨‍🏫 Teachers</h1><p>{{ teachers.count }} teacher(s) registered</p></div>
+    <a href="{% url 'add_teacher' %}" class="btn-gold">➕ Add Teacher</a>
+  </div>
+  <div class="card">
+    {% if teachers %}
+    <div style="overflow-x:auto;">
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Teacher</th><th>Username</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for t in teachers %}
+          <tr>
+            <td style="color:var(--muted);">{{ forloop.counter }}</td>
+            <td><div style="display:flex;align-items:center;gap:10px;">
+              {% if t.photo %}<img src="{{ t.photo.url }}" class="avatar">{% else %}<div class="av-ph">{{ t.name|first|upper }}</div>{% endif %}
+              <span style="font-weight:500;">{{ t.name }}</span>
+            </div></td>
+            <td style="color:var(--muted);">{{ t.username }}</td>
+            <td style="color:var(--muted);font-size:12px;">{{ t.email|default:"—" }}</td>
+            <td>{% if t.is_admin %}<span class="admin-badge">👑 Admin</span>{% else %}<span style="font-size:12px;color:var(--muted);">Teacher</span>{% endif %}</td>
+            <td><div style="display:flex;gap:6px;">
+              <a href="{% url 'edit_teacher' t.id %}" class="act-btn btn-edit">✏ Edit</a>
+              <a href="{% url 'delete_teacher' t.id %}" class="act-btn btn-del" onclick="return confirm('Delete {{ t.name }}?')">🗑</a>
+            </div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<div class="empty"><div style="font-size:36px;margin-bottom:12px;">👨‍🏫</div><div>No teachers yet.</div><a href="{% url 'add_teacher' %}" class="btn-gold" style="display:inline-block;margin-top:16px;">Add First Teacher</a></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

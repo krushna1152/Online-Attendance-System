@@ -1,0 +1,66 @@
+{% extends "attendance/base.html" %}
+{% load custom_filters %}
+{% block title %}My Timetable — EduTrack{% endblock %}
+{% block content %}
+<style>
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--text:#f0ece4;--muted:#7a7a8a;}
+.page{max-width:1100px;margin:0 auto;padding:40px 24px;}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap;}
+.header h1{font-size:26px;margin:0;color:var(--text);}
+.sub{font-size:13px;color:var(--muted);}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--accent);font-size:12px;font-weight:700;}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.day{font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px;}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid rgba(255,255,255,0.06);border-radius:10px;background:rgba(255,255,255,0.02);margin-bottom:8px;}
+.item:last-child{margin-bottom:0;}
+.subject{font-weight:600;color:var(--text);}
+.teacher{font-size:12px;color:var(--muted);}
+.time{font-size:12px;color:#d7d2c8;white-space:nowrap;}
+.empty{font-size:13px;color:var(--muted);padding:12px;border:1px dashed rgba(255,255,255,0.12);border-radius:10px;}
+.notice{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);color:#f8b84e;padding:12px 14px;border-radius:10px;font-size:13px;}
+</style>
+
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>📅 My Timetable</h1>
+      <div class="sub">Weekly lecture schedule</div>
+    </div>
+    {% if selected_class %}
+      <span class="badge">{{ selected_class.name }}{% if selected_class.section %} - {{ selected_class.section }}{% endif %}</span>
+    {% endif %}
+  </div>
+
+  {% if not selected_class %}
+    <div class="notice">Your class is not assigned yet. Please contact your teacher/admin.</div>
+  {% else %}
+    {% if auto_selected %}
+      <div class="notice" style="margin-bottom:14px;">Your class is not assigned yet, so showing the only available timetable for now.</div>
+    {% endif %}
+    <div class="grid">
+      {% for day in days %}
+      <div class="card">
+        <div class="day">{{ day }}</div>
+        {% with rows=schedule|get_item:day %}
+          {% if rows %}
+            {% for row in rows %}
+            <div class="item">
+              <div>
+                <div class="subject">{{ row.subject.name }}</div>
+                <div class="teacher">👨‍🏫 {{ row.teacher.name|default:"Teacher not assigned" }}</div>
+              </div>
+              <div class="time">{{ row.start_time|time:"H:i" }} - {{ row.end_time|time:"H:i" }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty">No lectures scheduled.</div>
+          {% endif %}
+        {% endwith %}
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

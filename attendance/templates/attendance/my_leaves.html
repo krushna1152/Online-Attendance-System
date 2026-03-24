@@ -1,0 +1,72 @@
+{% extends "attendance/base.html" %}
+{% block title %}My Leaves — EduTrack{% endblock %}
+{% block content %}
+<style>
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--text:#f0ece4;--muted:#7a7a8a;--green:#4caf82;--red:#e05c5c;--amber:#f59e0b;}
+.page{max-width:980px;margin:0 auto;padding:40px 24px;}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.title{font-size:28px;font-weight:700;color:var(--text);margin:0;}
+.sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.btn{display:inline-block;padding:9px 16px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.12);color:var(--accent);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{color:#9ca3b5;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:10px 8px;border-bottom:1px solid var(--border);text-align:left;}
+.tbl td{padding:12px 8px;border-bottom:1px solid rgba(255,255,255,0.05);color:#ece8df;vertical-align:top;}
+.tbl tr:last-child td{border-bottom:none;}
+.pill{font-size:11px;padding:4px 10px;border-radius:999px;font-weight:700;display:inline-block;}
+.pending{background:rgba(245,158,11,0.16);color:var(--amber);}
+.approved{background:rgba(76,175,130,0.16);color:var(--green);}
+.rejected{background:rgba(224,92,92,0.16);color:var(--red);}
+.note{color:var(--muted);font-size:12px;max-width:360px;white-space:pre-wrap;}
+.empty{padding:28px 12px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed rgba(255,255,255,0.12);border-radius:10px;}
+</style>
+
+<div class="page">
+  <div class="header">
+    <div>
+      <h1 class="title">🧾 My Leaves</h1>
+      <div class="sub">Track all your leave requests and approval status</div>
+    </div>
+    <a class="btn" href="{% url 'apply_leave' %}">🙋 Apply Leave</a>
+  </div>
+
+  <div class="card">
+    {% if leave_requests %}
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Applied On</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Status</th>
+          <th>Reason</th>
+          <th>Reviewer Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for leave in leave_requests %}
+        <tr>
+          <td>{{ leave.applied_on|date:"d M Y, H:i" }}</td>
+          <td>{{ leave.from_date }}</td>
+          <td>{{ leave.to_date }}</td>
+          <td>
+            {% if leave.status == 'Approved' %}
+              <span class="pill approved">Approved</span>
+            {% elif leave.status == 'Rejected' %}
+              <span class="pill rejected">Rejected</span>
+            {% else %}
+              <span class="pill pending">Pending</span>
+            {% endif %}
+          </td>
+          <td class="note">{{ leave.reason }}</td>
+          <td class="note">{{ leave.reviewer_note|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="empty">No leave requests found. Use “Apply Leave” to submit your first request.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

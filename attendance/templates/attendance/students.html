@@ -1,0 +1,584 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
+  :root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;--green:#4caf82;--blue:#5b8dee;}
+  body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+  .page{max-width:1100px;margin:0 auto;padding:48px 24px;}
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;animation:fadeUp 0.4s ease both;}
+  .page-header h1{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:4px;}
+  .page-header p{font-size:13px;color:var(--muted);}
+  .btn-gold{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:13px;border:none;border-radius:10px;padding:10px 20px;cursor:pointer;text-decoration:none;transition:opacity 0.2s;}
+  .btn-gold:hover{opacity:0.9;color:#0b0f19;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;animation:fadeUp 0.5s ease both;animation-delay:0.1s;}
+  .search-row{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+  .search-wrap{flex:1;position:relative;}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;}
+  .search-input{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px 10px 36px;color:var(--text);font-size:14px;outline:none;transition:border-color 0.2s;}
+  .search-input:focus{border-color:rgba(201,168,76,0.5);}
+  .search-input::placeholder{color:var(--muted);}
+  .search-suggest{position:absolute;top:44px;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 24px rgba(0,0,0,0.45);padding:6px;z-index:25;display:none;max-height:280px;overflow-y:auto;}
+  .search-suggest.open{display:block;}
+  .search-suggest-item{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:0;color:var(--text);font-size:13px;padding:9px 10px;border-radius:8px;cursor:pointer;text-align:left;}
+  .search-suggest-item.active,
+  .search-suggest-item:hover{background:rgba(201,168,76,0.1);}
+  .suggest-avatar{width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,0.18);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0;}
+  .suggest-text{flex:1;min-width:0;}
+  .suggest-name{display:block;font-weight:600;color:var(--text);}
+  .suggest-roll{display:block;font-size:11px;color:var(--muted);margin-top:1px;}
+  .match-highlight{color:var(--accent);font-weight:700;}
+  .tbl{width:100%;border-collapse:collapse;font-size:14px;}
+  .tbl th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;}
+  .tbl td{padding:13px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tr:hover td{background:rgba(201,168,76,0.03);}
+  .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,0.3);display:block;}
+  .avatar-placeholder{width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,0.12);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--accent);}
+  .avatar-menu-wrap{position:relative;display:inline-flex;}
+  .avatar-btn{border:0;background:transparent;padding:0;line-height:0;cursor:pointer;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;overflow:hidden;}
+  .avatar-btn:focus-visible{outline:2px solid rgba(201,168,76,0.6);outline-offset:2px;}
+  .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  .avatar-dropdown{position:absolute;top:100%;left:0;min-width:180px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px;box-shadow:0 12px 28px rgba(0,0,0,0.45);display:none;z-index:1200;margin-top:6px;}
+  .avatar-dropdown.open{display:block;}
+  .avatar-action{display:block;padding:8px 10px;border-radius:8px;color:var(--text);font-size:12px;text-decoration:none;}
+  .avatar-action:hover{background:rgba(201,168,76,0.08);color:var(--accent);}
+  .student-cell{min-width:240px;}
+  .student-name{display:block;font-weight:600;color:#f0ece4;line-height:1.25;white-space:normal;overflow-wrap:anywhere;}
+  .student-name-link{text-decoration:none;color:inherit;}
+  .student-name-link:hover .student-name{color:var(--accent);}
+  .roll-badge{background:rgba(201,168,76,0.12);color:var(--accent);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .email-text{font-size:12px;color:var(--muted);}
+  .act-btn{border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:opacity 0.2s,transform 0.15s;display:inline-block;}
+  .act-btn:hover{opacity:0.8;transform:scale(0.96);}
+  .btn-edit{background:rgba(91,141,238,0.15);color:var(--blue);}
+  .btn-del {background:rgba(224,92,92,0.15);color:var(--red);}
+  .empty-state{text-align:center;padding:48px 0;color:var(--muted);}
+  .empty-icon{font-size:40px;margin-bottom:12px;}
+  .pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:24px;font-size:13px;}
+  .page-btn{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--text);text-decoration:none;transition:border-color 0.2s;}
+  .page-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .page-btn.active{background:rgba(201,168,76,0.15);border-color:var(--accent);color:var(--accent);}
+  .page-info{color:var(--muted);}
+</style>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>👥 Students</h1>
+      <p>{{ page_obj.paginator.count }} student(s) registered</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="{% url 'add_student' %}" class="btn-gold">➕ Add Student</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="get" action="{% url 'students' %}" class="search-row" id="studentSearchForm">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" name="q" value="{{ query|default:'' }}" class="search-input" id="studentSearchInput" placeholder="Search by name or roll number…" autocomplete="off">
+        <div class="search-suggest" id="studentSearchSuggest"></div>
+      </div>
+      <button type="submit" class="btn-gold" style="white-space:nowrap;">Search</button>
+      {% if query %}<a href="{% url 'students' %}" class="act-btn btn-edit" id="studentSearchClear">✕ Clear</a>{% endif %}
+    </form>
+
+    {% if students %}
+    <div style="overflow-x:auto;overflow-y:visible;">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Roll No.</th>
+            <th>Class</th>
+            <th>Email</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td style="color:var(--muted);">{{ forloop.counter0|add:page_obj.start_index }}</td>
+            <td class="student-cell">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar-menu-wrap">
+                  <button type="button" class="avatar-btn" data-avatar-btn="student-menu-{{ student.id }}" title="Profile">
+                    {% if student.photo %}
+                      <img src="{{ student.photo.url }}" class="avatar student-avatar-img" alt="{{ student.name }} profile">
+                      <div class="avatar-placeholder" style="display:none;">{{ student.name|first|upper }}</div>
+                    {% else %}
+                      <div class="avatar-placeholder">{{ student.name|first|upper }}</div>
+                    {% endif %}
+                    <span class="sr-only">Profile</span>
+                  </button>
+                  <div class="avatar-dropdown" id="student-menu-{{ student.id }}">
+                    <a class="avatar-action" href="{% url 'edit_student' student.id %}">👤 See Profile</a>
+                    <a class="avatar-action" href="{% url 'edit_student' student.id %}?crop=true">🖼 Edit Profile Picture</a>
+                    <button type="button" class="avatar-action" data-crop-student="{{ student.id }}" data-crop-photo="{% if student.photo %}{{ student.photo.url }}{% endif %}" data-crop-name="{{ student.name|escapejs }}" style="border:0;background:transparent;cursor:pointer;padding:8px 10px;width:100%;text-align:left;">✂ Crop Photo</button>
+                  </div>
+                </div>
+                <a href="{% url 'edit_student' student.id %}" class="student-name-link" title="Open student details">
+                  <span class="student-name">{{ student.name }}</span>
+                </a>
+              </div>
+            </td>
+            <td><span class="roll-badge">{{ student.roll_number }}</span></td>
+            <td>
+              <span class="email-text">
+                {% if student.class_section %}
+                  {{ student.class_section.name }}
+                {% else %}
+                  Not Assigned
+                {% endif %}
+              </span>
+            </td>
+            <td><span class="email-text">{{ student.email|default:"—" }}</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <a href="{% url 'edit_student' student.id %}" class="act-btn btn-edit">✏ Edit</a>
+                <a href="{% url 'delete_student' student.id %}" class="act-btn btn-del" onclick="return confirm('Delete {{ student.name }}? All their attendance records will be lost.')">🗑 Delete</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="page-btn">← Prev</a>
+      {% endif %}
+      <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="page-btn">Next →</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🎓</div>
+      <div>No students found{% if query %} for "{{ query }}"{% endif %}</div>
+      {% if not query %}<a href="{% url 'add_student' %}" class="btn-gold" style="display:inline-block;margin-top:16px;">Add First Student</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Crop Modal -->
+<div id="cropModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:2000;overflow-y:auto;padding:20px;flex-direction:column;align-items:center;justify-content:flex-start;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:600px;width:100%;padding:24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.5);margin-top:40px;">
+    <button type="button" style="position:absolute;top:16px;right:16px;background:transparent;border:0;font-size:24px;cursor:pointer;color:var(--muted);padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;" onclick="closeCropModal()">✕</button>
+    
+    <h2 style="font-family:'Playfair Display',serif;color:var(--text);margin-bottom:16px;padding-right:32px;font-size:20px;">✂ Crop Photo</h2>
+    
+    <div style="margin-bottom:20px;">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">Drag to position • Scroll or zoom to adjust</p>
+      <div id="cropContainer" style="position:relative;height:360px;width:100%;overflow:hidden;border:2px dashed var(--border);border-radius:10px;background:rgba(0,0,0,0.3);cursor:grab;user-select:none;">
+        <img id="cropImage" src="" alt="Student crop preview" style="position:absolute;top:0;left:0;max-width:none;cursor:grab;user-select:none;">
+      </div>
+    </div>
+    
+    <div style="display:flex;gap:10px;margin-bottom:20px;">
+      <label style="flex:1;">
+        <span style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Zoom</span>
+        <input type="range" id="cropZoom" min="1" max="3" step="0.1" value="1" style="width:100%;cursor:pointer;">
+      </label>
+    </div>
+    
+    <div style="display:flex;gap:10px;">
+      <button type="button" onclick="closeCropModal()" style="flex:1;background:var(--input-bg);border:1px solid var(--border);color:var(--text);font-weight:600;padding:10px 16px;border-radius:8px;cursor:pointer;transition:all 0.2s;">Cancel</button>
+      <button type="button" onclick="saveCrop()" style="flex:1;background:linear-gradient(135deg,#c9a84c,#f0d080);border:0;color:#0b0f19;font-weight:700;padding:10px 16px;border-radius:8px;cursor:pointer;transition:opacity 0.2s;">Save Crop</button>
+    </div>
+  </div>
+</div>
+
+{{ student_suggestions|json_script:"studentSuggestionsData" }}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.student-avatar-img').forEach(function (img) {
+      if (!img.complete || img.naturalWidth === 0) {
+        img.style.display = 'none';
+        var fallback = img.nextElementSibling;
+        if (fallback && fallback.classList.contains('avatar-placeholder')) {
+          fallback.style.display = 'inline-flex';
+        }
+      }
+    });
+
+    var searchForm = document.getElementById('studentSearchForm');
+    var searchInput = document.getElementById('studentSearchInput');
+    var suggestBox = document.getElementById('studentSearchSuggest');
+    var suggestionsNode = document.getElementById('studentSuggestionsData');
+    var allSuggestions = [];
+    var activeSuggestionIndex = -1;
+
+    if (suggestionsNode) {
+      try {
+        allSuggestions = JSON.parse(suggestionsNode.textContent) || [];
+      } catch (e) {
+        allSuggestions = [];
+      }
+    }
+
+    function closeSuggestions() {
+      if (suggestBox) {
+        suggestBox.classList.remove('open');
+        suggestBox.innerHTML = '';
+      }
+      activeSuggestionIndex = -1;
+    }
+
+    function getSuggestionButtons() {
+      if (!suggestBox) {
+        return [];
+      }
+      return Array.prototype.slice.call(suggestBox.querySelectorAll('.search-suggest-item'));
+    }
+
+    function setActiveSuggestion(index) {
+      var buttons = getSuggestionButtons();
+      if (!buttons.length) {
+        activeSuggestionIndex = -1;
+        return;
+      }
+
+      if (index < 0 || index >= buttons.length) {
+        activeSuggestionIndex = -1;
+      } else {
+        activeSuggestionIndex = index;
+      }
+
+      buttons.forEach(function (button, buttonIndex) {
+        button.classList.toggle('active', buttonIndex === activeSuggestionIndex);
+      });
+
+      if (activeSuggestionIndex >= 0) {
+        buttons[activeSuggestionIndex].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function highlightMatch(text, query) {
+      if (!query) return text;
+      var regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      return text.replace(regex, '<span class="match-highlight">$1</span>');
+    }
+
+    function selectSuggestion(button) {
+      if (!button || !searchInput) {
+        return;
+      }
+      searchInput.value = button.getAttribute('data-search') || '';
+      closeSuggestions();
+      if (searchForm) {
+        searchForm.submit();
+      }
+    }
+
+    function renderSuggestions(term) {
+      if (!suggestBox) {
+        return;
+      }
+      var q = (term || '').trim().toLowerCase();
+      if (q.length < 2) {
+        closeSuggestions();
+        return;
+      }
+
+      var matched = allSuggestions.filter(function (item) {
+        return item.name.toLowerCase().includes(q) || (item.roll && item.roll.toLowerCase().includes(q));
+      }).slice(0, 8);
+
+      if (!matched.length) {
+        closeSuggestions();
+        return;
+      }
+
+      suggestBox.innerHTML = matched.map(function (item) {
+        var nameHighlight = highlightMatch(item.name, q);
+        var rollHighlight = item.roll ? highlightMatch(item.roll, q) : '';
+        return '<button type="button" class="search-suggest-item" data-search="' + item.name.replace(/"/g, '&quot;') + '" title="' + item.display.replace(/"/g, '&quot;') + '">' +
+          '<div class="suggest-avatar">' + item.initial + '</div>' +
+          '<div class="suggest-text">' +
+            '<span class="suggest-name">' + nameHighlight + '</span>' +
+            (rollHighlight ? '<span class="suggest-roll">' + rollHighlight + '</span>' : '') +
+          '</div>' +
+          '</button>';
+      }).join('');
+      suggestBox.classList.add('open');
+      activeSuggestionIndex = -1;
+    }
+
+    if (searchInput && suggestBox) {
+      searchInput.addEventListener('input', function () {
+        var currentValue = (searchInput.value || '').trim();
+        renderSuggestions(searchInput.value);
+        
+        var hasQueryInUrl = window.location.search.includes('q=');
+        if (!currentValue && hasQueryInUrl) {
+          window.location.href = "{% url 'students' %}";
+        }
+      });
+
+      searchInput.addEventListener('focus', function () {
+        renderSuggestions(searchInput.value);
+      });
+
+      suggestBox.addEventListener('click', function (event) {
+        var item = event.target.closest('[data-search]');
+        if (!item) {
+          return;
+        }
+        selectSuggestion(item);
+      });
+
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.search-wrap')) {
+          closeSuggestions();
+        }
+      });
+
+      searchInput.addEventListener('keydown', function (event) {
+        var buttons = getSuggestionButtons();
+
+        if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && suggestBox.classList.contains('open') && buttons.length) {
+          event.preventDefault();
+          if (event.key === 'ArrowDown') {
+            setActiveSuggestion((activeSuggestionIndex + 1) % buttons.length);
+          } else {
+            setActiveSuggestion(activeSuggestionIndex <= 0 ? buttons.length - 1 : activeSuggestionIndex - 1);
+          }
+          return;
+        }
+
+        if (event.key === 'Enter' && suggestBox.classList.contains('open') && activeSuggestionIndex >= 0 && buttons[activeSuggestionIndex]) {
+          event.preventDefault();
+          selectSuggestion(buttons[activeSuggestionIndex]);
+          return;
+        }
+
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeSuggestions();
+        }
+      });
+    }
+
+    function closeAllMenus() {
+      document.querySelectorAll('.avatar-dropdown.open').forEach(function (menu) {
+        menu.classList.remove('open');
+      });
+    }
+
+    document.querySelectorAll('[data-avatar-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function (event) {
+        event.stopPropagation();
+        var id = btn.getAttribute('data-avatar-btn');
+        var menu = document.getElementById(id);
+        if (!menu) {
+          return;
+        }
+        var willOpen = !menu.classList.contains('open');
+        closeAllMenus();
+        if (willOpen) {
+          menu.classList.add('open');
+        }
+      });
+    });
+
+    document.addEventListener('click', function () {
+      closeAllMenus();
+    });
+
+    window.addEventListener('resize', function () {
+      closeAllMenus();
+    });
+
+    // Crop Modal Handlers
+    var cropImage = document.getElementById('cropImage');
+    var cropZoom = document.getElementById('cropZoom');
+    var cropModal = document.getElementById('cropModal');
+    var cropContainer = document.getElementById('cropContainer');
+    var cropStudentId = null;
+    var cropOffsetX = 0, cropOffsetY = 0;
+    var isDragging = false;
+    var dragStartX = 0, dragStartY = 0;
+
+    function updateImagePosition() {
+      cropImage.style.left = cropOffsetX + 'px';
+      cropImage.style.top = cropOffsetY + 'px';
+    }
+
+    cropImage.addEventListener('load', function () {
+      var containerW = cropContainer.clientWidth;
+      var containerH = cropContainer.clientHeight;
+      var naturalW = cropImage.naturalWidth || containerW;
+      var naturalH = cropImage.naturalHeight || containerH;
+      var fitScale = Math.max(containerW / naturalW, containerH / naturalH);
+      cropImage.style.width = Math.ceil(naturalW * fitScale) + 'px';
+      cropImage.style.height = Math.ceil(naturalH * fitScale) + 'px';
+      cropOffsetX = Math.floor((containerW - (naturalW * fitScale)) / 2);
+      cropOffsetY = Math.floor((containerH - (naturalH * fitScale)) / 2);
+      updateImagePosition();
+    });
+
+    cropContainer.addEventListener('wheel', function (e) {
+      if (!cropImage.src) return;
+      e.preventDefault();
+      var current = parseFloat(cropZoom.value);
+      var next = current + (e.deltaY < 0 ? 0.1 : -0.1);
+      if (next < 1) next = 1;
+      if (next > 3) next = 3;
+      cropZoom.value = next.toFixed(1);
+      cropZoom.dispatchEvent(new Event('input'));
+    }, { passive: false });
+
+    cropZoom.addEventListener('input', function () {
+      if (cropImage.src) {
+        var scale = this.value;
+        cropImage.style.transform = 'scale(' + scale + ')';
+        cropImage.style.transformOrigin = 'top left';
+      }
+    });
+
+    cropContainer.addEventListener('mousedown', function (e) {
+      if (!cropImage.src) return;
+      isDragging = true;
+      dragStartX = e.clientX - cropOffsetX;
+      dragStartY = e.clientY - cropOffsetY;
+      cropContainer.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      if (!isDragging || !cropImage.src) return;
+      cropOffsetX = e.clientX - dragStartX;
+      cropOffsetY = e.clientY - dragStartY;
+      updateImagePosition();
+    });
+
+    document.addEventListener('mouseup', function () {
+      isDragging = false;
+      cropContainer.style.cursor = 'grab';
+    });
+
+    document.querySelectorAll('[data-crop-student]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var photoUrl = this.getAttribute('data-crop-photo');
+        var studentId = this.getAttribute('data-crop-student');
+        var studentName = this.getAttribute('data-crop-name');
+        if (photoUrl) {
+          openCropModal(photoUrl, studentId, studentName);
+          closeAllMenus();
+        } else {
+          alert('No profile picture found for this student.');
+        }
+      });
+    });
+
+    window.openCropModal = function (photoUrl, studentId, studentName) {
+      cropStudentId = studentId;
+      cropImage.src = photoUrl;
+      cropZoom.value = 1;
+      cropImage.style.transform = 'scale(1)';
+      cropOffsetX = 0;
+      cropOffsetY = 0;
+      updateImagePosition();
+      cropModal.style.display = 'flex';
+    };
+
+    window.closeCropModal = function () {
+      cropModal.style.display = 'none';
+      cropStudentId = null;
+    };
+
+    function getCsrfCookie() {
+      var name = 'csrftoken=';
+      var decodedCookie = decodeURIComponent(document.cookie || '');
+      var parts = decodedCookie.split(';');
+      for (var i = 0; i < parts.length; i++) {
+        var c = parts[i].trim();
+        if (c.indexOf(name) === 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return '';
+    }
+
+    window.saveCrop = function () {
+      if (!cropStudentId) return;
+      var scale = parseFloat(cropZoom.value) || 1;
+      var containerW = cropContainer.clientWidth;
+      var containerH = cropContainer.clientHeight;
+      var baseW = cropImage.offsetWidth;
+      var baseH = cropImage.offsetHeight;
+      if (!baseW || !baseH || !containerW || !containerH) {
+        alert('Unable to crop this image. Please try again.');
+        return;
+      }
+
+      var drawnW = baseW * scale;
+      var drawnH = baseH * scale;
+      var naturalW = cropImage.naturalWidth || baseW;
+      var naturalH = cropImage.naturalHeight || baseH;
+
+      var sx = (-cropOffsetX / drawnW) * naturalW;
+      var sy = (-cropOffsetY / drawnH) * naturalH;
+      var sWidth = (containerW / drawnW) * naturalW;
+      var sHeight = (containerH / drawnH) * naturalH;
+
+      if (sx < 0) sx = 0;
+      if (sy < 0) sy = 0;
+      if (sx + sWidth > naturalW) sWidth = naturalW - sx;
+      if (sy + sHeight > naturalH) sHeight = naturalH - sy;
+
+      var canvas = document.createElement('canvas');
+      canvas.width = containerW;
+      canvas.height = containerH;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(cropImage, sx, sy, sWidth, sHeight, 0, 0, containerW, containerH);
+
+      var formData = new FormData();
+      canvas.toBlob(function (blob) {
+        if (!blob) {
+          alert('Unable to save crop. Please try again.');
+          return;
+        }
+        formData.append('cropped_image', blob, 'student-crop.png');
+
+        fetch('/edit-student/' + cropStudentId + '/?crop=save', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCsrfCookie(),
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: formData
+        }).then(function (response) {
+          if (!response.ok) {
+            throw new Error('Crop save failed');
+          }
+          return response.json();
+        }).then(function () {
+          closeCropModal();
+          location.reload();
+        }).catch(function () {
+          alert('Save failed. Please try again.');
+        });
+      }, 'image/png', 0.95);
+    };
+
+    // Close modal on outside click
+    cropModal.addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeCropModal();
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+# Environment variables - NEVER commit these
+.env
+*.env
+
+# Database
+db.sqlite3
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Media uploads
+media/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Virtual env
+venv/
+env/

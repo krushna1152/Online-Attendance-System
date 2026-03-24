@@ -1,0 +1,262 @@
+{% extends "attendance/base.html" %}
+{% block title %}Admin Panel — EduTrack{% endblock %}
+{% block content %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;--green:#4caf82;--blue:#5b8dee;--purple:#9b72f7;}
+body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+.page{max-width:1200px;margin:0 auto;padding:40px 24px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;animation:fadeUp .4s ease both;}
+.page-header h1{font-family:'Playfair Display',serif;font-size:28px;}
+.page-header p{font-size:13px;color:var(--muted);}
+.admin-badge{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;letter-spacing:.8px;text-transform:uppercase;}
+.sec-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px;}
+@media(max-width:1000px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px 16px;position:relative;overflow:hidden;animation:fadeUp .5s ease both;transition:transform .2s;cursor:pointer;text-decoration:none;color:inherit;display:block;}
+.stat-card:hover{transform:translateY(-3px);border-color:rgba(201,168,76,0.5);}
+.stat-card:nth-child(1){animation-delay:.05s;}.stat-card:nth-child(2){animation-delay:.1s;}.stat-card:nth-child(3){animation-delay:.15s;}.stat-card:nth-child(4){animation-delay:.2s;}.stat-card:nth-child(5){animation-delay:.25s;}.stat-card:nth-child(6){animation-delay:.3s;}
+.stat-glow{position:absolute;top:-20px;right:-20px;width:70px;height:70px;border-radius:50%;opacity:.15;filter:blur(16px);}
+.stat-icon{font-size:18px;margin-bottom:8px;}
+.stat-val{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;line-height:1;margin-bottom:3px;}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;}
+/* Quick actions */
+.quick-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:28px;}
+@media(max-width:800px){.quick-grid{grid-template-columns:repeat(3,1fr);}}
+.quick-btn{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:11px;padding:16px 10px;text-align:center;text-decoration:none;color:var(--text);transition:all .2s;display:block;}
+.quick-btn:hover{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.3);transform:translateY(-2px);color:var(--text);}
+.quick-btn-icon{font-size:20px;margin-bottom:6px;}
+.quick-btn-label{font-size:11px;font-weight:500;}
+/* Two-col */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:28px;}
+@media(max-width:800px){.row2{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:24px;}
+/* Chart */
+.chart-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.chart-name{width:100px;font-size:12px;color:#e7e2d6;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chart-bar-w{flex:1;background:rgba(255,255,255,0.06);border-radius:99px;height:6px;overflow:hidden;}
+.chart-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,#c9a84c,#f0d080);}
+.chart-pct{width:48px;font-size:12px;font-weight:700;text-align:right;color:#d8bb62;}
+/* Settings */
+.setting-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.setting-item:last-child{border-bottom:none;}
+.setting-lbl{font-size:14px;color:#f0ece4!important;font-weight:700;}
+.setting-sub{font-size:12px;color:#bfb7a8!important;margin-top:2px;font-weight:500;}
+.toggle{position:relative;display:inline-block;width:40px;height:22px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-s{position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,0.1);border-radius:22px;transition:background .3s;}
+.toggle-s::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .3s;}
+.toggle input:checked+.toggle-s{background:var(--accent);}
+.toggle input:checked+.toggle-s::before{transform:translateX(18px);}
+/* Table */
+.full-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:24px;margin-bottom:28px;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;}
+.tbl td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(201,168,76,0.03);}
+.student-name{display:inline-block;color:#f0ece4!important;font-weight:600;line-height:1.25;white-space:normal;overflow-wrap:anywhere;}
+.roll-badge{background:rgba(201,168,76,0.12);color:var(--accent);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.status-pill{font-size:12px;padding:4px 11px;border-radius:20px;font-weight:700;}
+.sp-present{background:rgba(76,175,130,0.22);color:#7be0b0!important;}
+.sp-absent{background:rgba(224,92,92,0.22);color:#ff8f8f!important;}
+.sp-none{background:rgba(255,255,255,0.12);color:#d6cfae!important;}
+.pct-wrap{background:rgba(255,255,255,0.06);border-radius:99px;height:5px;width:80px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px;}
+.pct-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#c9a84c,#f0d080);}
+.pct-fill.low{background:linear-gradient(90deg,#e05c5c,#f08080);}
+.act-btn{border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:opacity .2s;display:inline-block;}
+.act-btn:hover{opacity:.8;}
+.btn-edit{background:rgba(91,141,238,0.15);color:var(--blue);}
+.btn-del{background:rgba(224,92,92,0.15);color:var(--red);}
+/* Log */
+.log-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.log-item:last-child{border-bottom:none;}
+.log-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.log-dot.green{background:#4caf82;box-shadow:0 0 5px #4caf82;}
+.log-dot.red{background:#e05c5c;box-shadow:0 0 5px #e05c5c;}
+.log-dot.gold{background:#c9a84c;box-shadow:0 0 5px #c9a84c;}
+.log-dot.blue{background:#5b8dee;box-shadow:0 0 5px #5b8dee;}
+.log-text{font-size:14px;color:#ece8df;font-weight:500;}
+.log-time{font-size:12px;color:#b9b2a5;margin-top:2px;}
+.admin-search{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--text);font-size:13px;outline:none;margin-bottom:16px;transition:border-color .2s;}
+.admin-search:focus{border-color:rgba(201,168,76,.5);}
+.admin-search::placeholder{color:var(--muted);}
+.warn-banner{background:rgba(224,92,92,0.08);border:1px solid rgba(224,92,92,0.2);border-radius:11px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+</style>
+
+<div class="page">
+  <div class="page-header">
+    <div><h1>⚙ Admin Panel</h1><p>System overview, management & configuration</p></div>
+    <span class="admin-badge">🔐 Admin</span>
+  </div>
+
+  {% if low_attendance_count > 0 %}
+  <div class="warn-banner">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:22px;">⚠️</span>
+      <span style="font-size:13px;color:#f08080;"><strong>{{ low_attendance_count }} student(s)</strong> have attendance below {{ threshold }}%</span>
+    </div>
+    <a href="{% url 'send_alerts' %}" style="background:rgba(224,92,92,0.15);border:1px solid rgba(224,92,92,0.25);color:var(--red);padding:8px 16px;border-radius:9px;font-size:12px;font-weight:600;text-decoration:none;">📧 Send Alerts</a>
+  </div>
+  {% endif %}
+
+  <!-- Stats -->
+  <div class="sec-title">📊 System Overview</div>
+  <div class="stats-grid">
+    <a href="{% url 'students' %}" class="stat-card"><div class="stat-glow" style="background:#c9a84c;"></div><div class="stat-icon">👥</div><div class="stat-val" style="color:var(--accent);">{{ total_students }}</div><div class="stat-lbl">Students</div></a>
+    <a href="{% url 'teachers' %}" class="stat-card"><div class="stat-glow" style="background:#5b8dee;"></div><div class="stat-icon">👨‍🏫</div><div class="stat-val" style="color:var(--blue);">{{ total_teachers }}</div><div class="stat-lbl">Teachers</div></a>
+    <a href="{% url 'report' %}" class="stat-card"><div class="stat-glow" style="background:#4caf82;"></div><div class="stat-icon">✅</div><div class="stat-val" style="color:var(--green);">{{ present_today }}</div><div class="stat-lbl">Present Today</div></a>
+    <a href="{% url 'report' %}" class="stat-card"><div class="stat-glow" style="background:#e05c5c;"></div><div class="stat-icon">❌</div><div class="stat-val" style="color:var(--red);">{{ absent_today }}</div><div class="stat-lbl">Absent Today</div></a>
+    <a href="{% url 'leaves' %}" class="stat-card"><div class="stat-glow" style="background:#f59e0b;"></div><div class="stat-icon">📋</div><div class="stat-val" style="color:#f59e0b;">{{ pending_leaves }}</div><div class="stat-lbl">Pending Student Leaves</div></a>
+    <a href="{% url 'report' %}" class="stat-card"><div class="stat-glow" style="background:#9b72f7;"></div><div class="stat-icon">📝</div><div class="stat-val" style="color:var(--purple);">{{ total_records }}</div><div class="stat-lbl">Records</div></a>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="sec-title">⚡ Quick Actions</div>
+  <div class="quick-grid" style="margin-bottom:28px;">
+    <a href="{% url 'add_student' %}"   class="quick-btn"><div class="quick-btn-icon">➕</div><div class="quick-btn-label">Add Student</div></a>
+    <a href="{% url 'add_teacher' %}"   class="quick-btn"><div class="quick-btn-icon">👨‍🏫</div><div class="quick-btn-label">Add Teacher</div></a>
+    <a href="{% url 'mark_page' %}"     class="quick-btn"><div class="quick-btn-icon">📝</div><div class="quick-btn-label">Mark Attendance</div></a>
+    <a href="{% url 'report' %}"        class="quick-btn"><div class="quick-btn-icon">📊</div><div class="quick-btn-label">Reports</div></a>
+    <a href="{% url 'leaves' %}"        class="quick-btn"><div class="quick-btn-icon">📋</div><div class="quick-btn-label">Student Leaves</div></a>
+    <a href="{% url 'timetable' %}"     class="quick-btn"><div class="quick-btn-icon">📅</div><div class="quick-btn-label">Timetable</div></a>
+    <a href="{% url 'classes' %}"       class="quick-btn"><div class="quick-btn-icon">🏫</div><div class="quick-btn-label">Classes</div></a>
+    <a href="{% url 'subjects' %}"      class="quick-btn"><div class="quick-btn-icon">📚</div><div class="quick-btn-label">Subjects</div></a>
+    <a href="{% url 'download_excel' %}" class="quick-btn"><div class="quick-btn-icon">📥</div><div class="quick-btn-label">Export Excel</div></a>
+    <a href="{% url 'send_alerts' %}"   class="quick-btn"><div class="quick-btn-icon">📧</div><div class="quick-btn-label">Send Alerts</div></a>
+    <a href="{% url 'teachers' %}"      class="quick-btn"><div class="quick-btn-icon">🔧</div><div class="quick-btn-label">Manage</div></a>
+  </div>
+
+  <div class="row2">
+    <!-- Chart -->
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px;">📈 Attendance Overview</div>
+      {% for item in chart_data %}<div class="chart-row"><div class="chart-name" title="{{ item.name }}">{{ item.name }}</div><div class="chart-bar-w"><div class="chart-bar" data-width="{{ item.percentage }}"></div></div><div class="chart-pct">{{ item.percentage }}%</div></div>{% empty %}<p style="color:var(--muted);font-size:13px;">No data yet.</p>{% endfor %}
+    </div>
+    <!-- Activity log -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="sec-title" style="margin-bottom:0;">🕒 Recent Activity</div>
+      </div>
+      {% for log in recent_logs %}
+      <div class="log-item">
+        <div class="log-dot {% if log.action == 'login' or log.action == 'add' %}green{% elif log.action == 'delete' %}red{% elif log.action == 'email' %}blue{% else %}gold{% endif %}"></div>
+        <div><div class="log-text">{{ log.message }}</div><div class="log-time">{{ log.timestamp|date:"d M, H:i" }} · {{ log.actor }}</div></div>
+      </div>
+      {% empty %}<p style="color:var(--muted);font-size:13px;">No activity yet.</p>{% endfor %}
+    </div>
+  </div>
+
+  <!-- Teacher Leave Management -->
+  <div class="full-card">
+    <div class="sec-title" style="margin-bottom:16px;">📋 Pending Student Leave Approvals</div>
+    {% if pending_leave_requests %}
+    <div style="overflow-x:auto;">
+      <table class="tbl">
+        <thead><tr><th>Student</th><th>Roll No.</th><th>Dates</th><th>Reason</th><th>Applied</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for leave in pending_leave_requests %}
+          <tr>
+            <td><span class="student-name">{{ leave.student.name }}</span></td>
+            <td><span class="roll-badge">{{ leave.student.roll_number }}</span></td>
+            <td style="font-size:12px;color:var(--muted);">{{ leave.from_date }} → {{ leave.to_date }}</td>
+            <td style="font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ leave.reason }}</td>
+            <td style="font-size:12px;color:var(--muted);">{{ leave.applied_on|date:"d M, H:i" }}</td>
+            <td>
+              <form method="POST" action="{% url 'review_leave' leave.id 'approve' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="act-btn" style="background:rgba(76,175,130,0.15);color:#4caf82;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">✅ Approve</button>
+              </form>
+              <form method="POST" action="{% url 'review_leave' leave.id 'reject' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="act-btn" style="background:rgba(224,92,92,0.15);color:#e05c5c;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;" onclick="return confirm('Reject this leave?')">❌ Reject</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;text-align:right;">
+      <a href="{% url 'leaves' %}" class="act-btn btn-edit" style="font-size:12px;">View All Student Leave Requests →</a>
+    </div>
+    {% else %}
+    <p style="color:var(--muted);font-size:13px;text-align:center;padding:24px;">✅ No pending leave requests to approve</p>
+    {% endif %}
+  </div>
+
+  <div class="row2">
+    <!-- System settings -->
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px;">🛠 System Settings</div>
+      <div class="setting-item"><div><div class="setting-lbl">Email Alerts</div><div class="setting-sub">Auto-send low attendance emails</div></div><div class="toggle"><input id="setting-email-alerts" type="checkbox" aria-label="Toggle email alerts" checked><span class="toggle-s"></span></div></div>
+      <div class="setting-item"><div><div class="setting-lbl">Attendance Threshold</div><div class="setting-sub">Minimum required %</div></div><span class="roll-badge">{{ threshold }}%</span></div>
+      <div class="setting-item"><div><div class="setting-lbl">Student Self-Edit</div><div class="setting-sub">Students can update their profile</div></div><div class="toggle"><input id="setting-student-self-edit" type="checkbox" aria-label="Toggle student self edit" checked><span class="toggle-s"></span></div></div>
+      <div class="setting-item"><div><div class="setting-lbl">Debug Mode</div><div class="setting-sub">Django server mode</div></div><span class="status-pill {% if debug_mode %}sp-absent{% else %}sp-present{% endif %}">{% if debug_mode %}ON{% else %}OFF{% endif %}</span></div>
+      <div class="setting-item"><div><div class="setting-lbl">Database</div><div class="setting-sub">{{ db_engine }}</div></div><span class="status-pill sp-present">Connected</span></div>
+    </div>
+    <!-- Low attendance -->
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px;">⚠️ Below {{ threshold }}% Attendance</div>
+      {% if low_students %}
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead><tr><th>Student</th><th>%</th><th></th></tr></thead>
+          <tbody>{% for s in low_students %}<tr>
+            <td><span class="student-name">{{ s.student.name }}</span><br><span class="roll-badge">{{ s.student.roll_number }}</span></td>
+            <td><div class="pct-wrap"><div class="pct-fill low" data-width="{{ s.percentage }}"></div></div><span style="font-size:12px;color:var(--red);">{{ s.percentage }}%</span></td>
+            <td><a href="{% url 'edit_student' s.student.id %}" class="act-btn btn-edit">Edit</a></td>
+          </tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      {% else %}<div style="text-align:center;padding:24px 0;color:var(--green);font-size:13px;">✅ All students above {{ threshold }}%</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Student table -->
+  <div class="sec-title">👥 Student Management</div>
+  <div class="full-card">
+    <form method="get"><input type="text" name="q" value="{{ query|default:'' }}" class="admin-search" placeholder="🔍 Search students…"></form>
+    <div style="overflow-x:auto;">
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Name</th><th>Roll</th><th>Class</th><th>Today</th><th>Overall %</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for row in student_rows %}
+          <tr>
+            <td style="color:var(--muted);">{{ forloop.counter }}</td>
+            <td><span class="student-name">{{ row.student.name }}</span></td>
+            <td><span class="roll-badge">{{ row.student.roll_number }}</span></td>
+            <td style="color:var(--muted);font-size:12px;">{{ row.student.class_section|default:"—" }}</td>
+            <td><span class="status-pill {% if row.today_status == 'Present' %}sp-present{% elif row.today_status == 'Absent' %}sp-absent{% else %}sp-none{% endif %}">{{ row.today_status|default:"—" }}</span></td>
+            <td><div class="pct-wrap"><div class="pct-fill" data-width="{{ row.percentage }}"></div></div><span style="font-size:12px;">{{ row.percentage }}%</span></td>
+            <td><div style="display:flex;gap:5px;"><a href="{% url 'edit_student' row.student.id %}" class="act-btn btn-edit">✏</a><a href="{% url 'delete_student' row.student.id %}" class="act-btn btn-del" onclick="return confirm('Delete {{ row.student.name }}?')">🗑</a></div></td>
+          </tr>
+          {% empty %}<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">No students found.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.chart-bar[data-width], .pct-fill[data-width]').forEach(function (el) {
+      var width = parseFloat(el.getAttribute('data-width'));
+      if (Number.isFinite(width)) {
+        el.style.width = Math.max(0, Math.min(100, width)) + '%';
+      }
+    });
+
+    // Defensive cleanup: remove legacy Activity Logs quick action if stale markup is served.
+    document.querySelectorAll('.quick-btn').forEach(function (btn) {
+      var label = (btn.querySelector('.quick-btn-label') || {}).textContent || '';
+      if (label.trim().toLowerCase() === 'activity logs') {
+        btn.remove();
+      }
+    });
+  });
+</script>
+{% endblock %}

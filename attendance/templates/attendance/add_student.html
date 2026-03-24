@@ -1,0 +1,167 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/css/intlTelInput.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
+  :root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;--green:#4caf82;}
+  body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+  .form-wrap{max-width:580px;margin:48px auto;padding:0 24px;}
+  .form-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;animation:fadeUp 0.5s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .form-title{font-family:'Playfair Display',serif;font-size:24px;margin-bottom:4px;color:var(--text);font-weight:600;}
+  .form-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+  .form-divider{height:1px;background:var(--border);margin:24px 0;}
+  .field{margin-bottom:20px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;}
+  .field input{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  .field select{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  .field input:focus{border-color:rgba(201,168,76,0.5);box-shadow:0 0 0 3px var(--accent-glow);}
+  .field select:focus{border-color:rgba(201,168,76,0.5);box-shadow:0 0 0 3px var(--accent-glow);}
+  .field input::placeholder{color:var(--muted);}
+  .field .hint{font-size:11px;color:var(--muted);margin-top:5px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .iti{width:100%;}
+  .iti__selected-country{background:rgba(255,255,255,0.02)!important;border-right:1px solid var(--border)!important;}
+  .iti__country-list{background:#131a29!important;border:1px solid var(--border)!important;color:var(--text)!important;}
+  .iti__country.iti__highlight{background:rgba(201,168,76,0.16)!important;}
+  .iti input{padding-left:90px!important;}
+  .btn-submit{width:100%;background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:14px;border:none;border-radius:10px;padding:13px;cursor:pointer;transition:opacity 0.2s,transform 0.15s;margin-top:8px;}
+  .btn-submit:hover{opacity:0.9;transform:translateY(-1px);}
+  .btn-submit:active{transform:scale(0.98);}
+  .btn-cancel{display:block;text-align:center;margin-top:12px;color:var(--muted);font-size:13px;text-decoration:none;}
+  .btn-cancel:hover{color:var(--accent);}
+  .error-msg{background:rgba(224,92,92,0.1);border:1px solid rgba(224,92,92,0.25);border-radius:8px;padding:10px 14px;font-size:13px;color:#f08080;margin-bottom:16px;}
+  .photo-label{display:flex;align-items:center;gap:10px;background:var(--input-bg);border:1px dashed rgba(201,168,76,0.3);border-radius:10px;padding:14px;cursor:pointer;transition:border-color 0.2s;}
+  .photo-label:hover{border-color:var(--accent);}
+  .photo-label input{display:none;}
+  .photo-icon{font-size:22px;}
+  .photo-text{font-size:13px;color:var(--muted);}
+  #photoName{font-size:12px;color:var(--accent);margin-top:4px;}
+</style>
+
+<div class="form-wrap">
+  <div class="form-card">
+    <div class="form-title">➕ Add New Student</div>
+    <div class="form-sub">Fill in the details to register a new student</div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="error-msg">⚠ {{ msg }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" id="addForm" autocomplete="off">
+      {% csrf_token %}
+
+      <div class="row2">
+        <div class="field">
+          <label for="nameInput">Full Name *</label>
+          <input id="nameInput" type="text" name="name" placeholder="e.g. Rahul Sharma" value="{{ form_data.name|default:'' }}" required>
+        </div>
+        <div class="field">
+          <label for="rollInput">Roll Number *</label>
+          <input type="text" name="roll_number" id="rollInput" placeholder="e.g. CS2024001" value="{{ form_data.roll_number|default:'' }}" required autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="emailInput">Email Address *</label>
+        <input type="email" name="email" id="emailInput" placeholder="student@email.com" value="{{ form_data.email|default:'' }}" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="hint">Enter student email manually</div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="phoneInput">Phone</label>
+          <input id="phoneInput" class="js-intl-phone" type="tel" name="phone" placeholder="e.g. +91 9876543210" value="{{ form_data.phone|default:'' }}">
+        </div>
+        <div class="field">
+          <label for="parentPhoneInput">Parent Phone</label>
+          <input id="parentPhoneInput" class="js-intl-phone" type="tel" name="parent_phone" placeholder="e.g. +91 9876543210" value="{{ form_data.parent_phone|default:'' }}">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="genderInput">Gender</label>
+        <select id="genderInput" name="gender">
+          <option value="">Select gender</option>
+          <option value="Male" {% if form_data.gender == 'Male' %}selected{% endif %}>Male</option>
+          <option value="Female" {% if form_data.gender == 'Female' %}selected{% endif %}>Female</option>
+          <option value="Other" {% if form_data.gender == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="passInput">Password *</label>
+        <input type="password" name="password" id="passInput" placeholder= required>
+        <div class="hint" id="passHint">Student will use this to login</div>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <div class="field">
+        <div style="display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">Profile Photo <span style="color:var(--muted);font-weight:400;">(optional)</span></div>
+        <label class="photo-label" for="photoInput">
+          <input id="photoInput" type="file" name="photo" accept="image/*" onchange="showFileName(this)">
+          <div class="photo-icon">📷</div>
+          <div>
+            <div class="photo-text">Click to upload photo</div>
+            <div id="photoName">No file chosen</div>
+          </div>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">✅ Add Student</button>
+    </form>
+
+    <a href="{% url 'students' %}" class="btn-cancel">← Back to Students</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/intlTelInput.min.js"></script>
+<script>
+const phoneInstances = [];
+
+function initIntlPhones(){
+  if (!window.intlTelInput) return;
+  document.querySelectorAll('.js-intl-phone').forEach(function(input){
+    const iti = window.intlTelInput(input, {
+      initialCountry: 'in',
+      nationalMode: false,
+      autoPlaceholder: 'aggressive',
+      formatOnDisplay: true,
+      utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/utils.js'
+    });
+    phoneInstances.push({ input: input, iti: iti });
+  });
+}
+
+const emailInput = document.getElementById('emailInput');
+const passInput  = document.getElementById('passInput');
+const passHint   = document.getElementById('passHint');
+
+passInput.addEventListener('input', function(){
+  const len = this.value.length;
+  if(len === 0) passHint.textContent = 'Student will use this to login';
+  else if(len < 6) passHint.style.color = '#e05c5c', passHint.textContent = `Too short — ${6-len} more character(s) needed`;
+  else passHint.style.color = '#4caf82', passHint.textContent = '✓ Strong enough';
+});
+
+function showFileName(input){
+  document.getElementById('photoName').textContent = input.files[0]?.name || 'No file chosen';
+}
+
+document.getElementById('addForm').addEventListener('submit', function(){
+  phoneInstances.forEach(function(item){
+    if (item.input.value.trim()) {
+      item.input.value = item.iti.getNumber();
+    }
+  });
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Adding…';
+  btn.disabled = true;
+});
+
+initIntlPhones();
+</script>
+{% endblock %}

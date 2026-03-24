@@ -1,0 +1,41 @@
+{% extends "attendance/base.html" %}
+{% block title %}Apply for Leave — EduTrack{% endblock %}
+{% block content %}
+<style>
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;}
+body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+.wrap{max-width:520px;margin:48px auto;padding:0 24px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;animation:fadeUp .5s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.title{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:4px;color:var(--accent);text-shadow:0 1px 0 rgba(0,0,0,0.35);}
+.sub{font-size:13px;color:#c6c0b2;margin-bottom:28px;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px;}
+.field input,.field textarea{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.field input:focus,.field textarea:focus{border-color:rgba(201,168,76,.5);box-shadow:0 0 0 3px var(--accent-glow);}
+.field textarea{resize:vertical;min-height:100px;font-family:inherit;}
+.field input[type="date"]{color-scheme:dark;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0)) ,var(--input-bg);border-color:rgba(201,168,76,0.22);}
+.field input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.9;filter:invert(75%) sepia(26%) saturate(584%) hue-rotate(9deg) brightness(100%) contrast(90%);}
+.field input[type="date"]:hover{border-color:rgba(201,168,76,0.45);box-shadow:0 0 0 2px rgba(201,168,76,0.14);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.btn-submit{width:100%;background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:14px;border:none;border-radius:10px;padding:13px;cursor:pointer;margin-top:4px;}
+.btn-cancel{display:block;text-align:center;margin-top:12px;color:var(--muted);font-size:13px;text-decoration:none;}
+.btn-cancel:hover{color:var(--accent);}
+</style>
+<div class="wrap">
+  <div class="card">
+    <div class="title">🙋 Apply for Leave</div>
+    <div class="sub">Submit a leave request to your teacher</div>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="row2">
+        <div class="field"><label for="leaveFromDate">From Date *</label><input id="leaveFromDate" type="date" name="from_date" required min="{{ today }}"></div>
+        <div class="field"><label for="leaveToDate">To Date *</label><input id="leaveToDate" type="date" name="to_date" required min="{{ today }}"></div>
+      </div>
+      <div class="field"><label for="leaveReason">Reason *</label><textarea id="leaveReason" name="reason" required placeholder="Briefly explain your reason for leave…"></textarea></div>
+      <button type="submit" class="btn-submit">📤 Submit Application</button>
+    </form>
+    <a href="{% url 'student_dashboard' %}" class="btn-cancel">← Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

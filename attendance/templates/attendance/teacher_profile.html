@@ -1,0 +1,71 @@
+{% extends "attendance/base.html" %}
+{% block title %}Teacher Profile - EduTrack{% endblock %}
+{% block content %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--text:#f0ece4;--muted:#7a7a8a;}
+body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+.page{max-width:980px;margin:0 auto;padding:40px 24px;}
+.header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
+.title{font-family:'Playfair Display',serif;font-size:28px;color:var(--text);margin:0 0 6px;}
+.sub{font-size:13px;color:var(--muted);margin:0;}
+.actions{display:flex;gap:10px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);}
+.btn-primary{background:rgba(201,168,76,0.14);border-color:rgba(201,168,76,0.32);color:var(--accent);}
+.btn-primary:hover{background:rgba(201,168,76,0.22);}
+.btn-ghost{background:rgba(255,255,255,0.03);color:var(--text);}
+.btn-ghost:hover{border-color:rgba(201,168,76,0.28);color:var(--accent);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;}
+.top{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
+.avatar{width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,0.35);}
+.avatar-initial{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,0.12);color:var(--accent);font-size:28px;font-weight:700;border:2px solid rgba(201,168,76,0.28);}
+.teacher-name{font-size:20px;font-weight:700;line-height:1.2;color:var(--text);}
+.teacher-meta{font-size:12px;color:#aab2c3;margin-top:3px;font-weight:600;}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.item{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;}
+.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.value{font-size:14px;color:var(--text);font-weight:600;margin-top:3px;word-break:break-word;}
+.note{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.24);font-size:13px;color:#f6d596;}
+@media(max-width:760px){.grid{grid-template-columns:1fr;}}
+</style>
+
+<div class="page">
+  <div class="header">
+    <div>
+      <h1 class="title">Teacher Profile</h1>
+      <p class="sub">{{ greeting }}, {{ teacher_name }}</p>
+    </div>
+    <div class="actions">
+      {% if teacher and request.session.is_admin %}
+      <a class="btn btn-primary" href="{% url 'edit_teacher' teacher.id %}">✏ Edit Profile</a>
+      {% endif %}
+      <a class="btn btn-ghost" href="{% url 'home' %}">← Back to Dashboard</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="top">
+      {% if teacher and teacher.photo %}
+      <img class="avatar" src="{{ teacher.photo.url }}" alt="{{ teacher_name }} profile">
+      {% else %}
+      <div class="avatar-initial">{{ teacher_name|first|upper }}</div>
+      {% endif %}
+      <div>
+        <div class="teacher-name">{{ teacher_name|default:"Teacher" }}</div>
+        <div class="teacher-meta">Role: {% if teacher and teacher.is_admin %}Admin Teacher{% else %}Teacher{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="item"><div class="label">Username</div><div class="value">{% if teacher %}{{ teacher.username }}{% else %}—{% endif %}</div></div>
+      <div class="item"><div class="label">Email</div><div class="value">{% if teacher and teacher.email %}{{ teacher.email }}{% else %}—{% endif %}</div></div>
+      <div class="item"><div class="label">Account Type</div><div class="value">{% if teacher and teacher.is_admin %}Admin{% else %}Standard{% endif %}</div></div>
+      <div class="item"><div class="label">Joined</div><div class="value">{% if teacher %}{{ teacher.created_at|date:"d M Y" }}{% else %}—{% endif %}</div></div>
+    </div>
+
+    {% if not teacher %}
+    <div class="note">Profile details are limited because this session is using fallback credentials.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

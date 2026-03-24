@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}EduTrack{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23111827'/><text x='50%25' y='58%25' dominant-baseline='middle' text-anchor='middle' font-size='18'>📊</text></svg>">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+body{background:#0b0f19;color:#e6e6e6;font-family:'DM Sans',sans-serif;min-height:100vh;}
+.navbar{background:#0d1220;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 20px;}
+.navbar-brand{font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:#c9a84c!important;letter-spacing:-0.3px;text-decoration:none;}
+.nav-btn{background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 14px;font-size:13px;color:#c8c8d0;text-decoration:none;transition:all 0.2s;white-space:nowrap;display:inline-block;}
+.nav-btn:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.2);color:#fff;}
+.nav-btn.active{background:rgba(201,168,76,0.12);border-color:rgba(201,168,76,0.4);color:#c9a84c;}
+.nav-btn.admin-btn{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.3);color:#c9a84c;}
+.nav-btn.danger{background:rgba(224,92,92,0.1);border-color:rgba(224,92,92,0.25);color:#e05c5c;}
+.role-badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:0.5px;margin-right:4px;}
+.badge-teacher{background:#c9a84c;color:#000;}
+.badge-student{background:#3b82f6;color:#fff;}
+.notif-btn{position:relative;display:inline-flex;align-items:center;gap:6px;}
+.notif-dot{position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:#e05c5c;border-radius:50%;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #0d1220;}
+.profile-menu{position:relative;display:inline-flex;align-items:center;}
+.profile-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.08);padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;}
+.profile-btn:hover{border-color:rgba(201,168,76,0.55);box-shadow:0 0 0 3px rgba(201,168,76,0.18);}
+.profile-avatar{width:100%;height:100%;object-fit:cover;display:block;}
+.profile-initial{font-size:13px;font-weight:700;color:#c9a84c;line-height:1;}
+.profile-dropdown{position:absolute;top:44px;right:0;min-width:200px;background:#111827;border:1px solid rgba(255,255,255,0.09);border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,0.45);padding:8px;display:none;z-index:1200;}
+.profile-dropdown.open{display:block;}
+.profile-head{display:flex;align-items:center;gap:8px;padding:6px 8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:6px;}
+.profile-head-pic{width:30px;height:30px;border-radius:50%;overflow:hidden;background:rgba(201,168,76,0.12);display:flex;align-items:center;justify-content:center;}
+.profile-head-name{font-size:12px;color:#d9d9e3;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.profile-action{display:block;width:100%;text-align:left;border:0;background:transparent;color:#cfd3de;text-decoration:none;font-size:13px;padding:8px 10px;border-radius:8px;}
+.profile-action:hover{background:rgba(201,168,76,0.08);color:#e9d39b;}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.nav-links{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.card-dark{background:#111827;border:1px solid rgba(255,255,255,0.07);border-radius:12px;}
+.form-control{background:#111827;border:1px solid #374151;color:#fff;border-radius:8px;padding:10px;}
+.form-control:focus{background:#111827;color:#fff;border-color:#c9a84c;box-shadow:0 0 0 2px rgba(201,168,76,0.3);}
+.form-control::placeholder{color:#6b7280;}
+.btn-gold{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;}
+.btn-gold:hover{color:#0b0f19;opacity:0.9;}
+.message-container{position:fixed;top:76px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:340px;}
+.custom-alert{padding:12px 16px;border-radius:10px;font-weight:500;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:slideIn 0.35s cubic-bezier(0.16,1,0.3,1);}
+.custom-alert.success{background:#14532d;border:1px solid #166534;color:#bbf7d0;}
+.custom-alert.error{background:#7f1d1d;border:1px solid #991b1b;color:#fecaca;}
+.custom-alert.info{background:#1e3a5f;border:1px solid #1d4ed8;color:#bfdbfe;}
+.custom-alert.warning{background:#78350f;border:1px solid #92400e;color:#fde68a;}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+.search-wrapper{display:flex;justify-content:center;margin:20px 0;}
+.search-box{position:relative;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:#6b7280;pointer-events:none;}
+.search-input{width:380px;height:42px;background:#111827;border:1px solid #374151;border-radius:10px;padding-left:36px;padding-right:14px;color:#fff;font-size:14px;}
+.search-input::placeholder{color:#6b7280;}
+.search-input:focus{outline:none;border-color:#c9a84c;box-shadow:0 0 0 2px rgba(201,168,76,0.25);}
+</style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <a class="navbar-brand" href="{% if request.session.role == 'teacher' %}{% url 'home' %}{% elif request.session.role == 'student' %}{% url 'student_dashboard' %}{% else %}{% url 'login' %}{% endif %}">📊 EduTrack</a>
+  <div class="ms-auto nav-links">
+    {% if request.session.role == 'teacher' %}
+      <span class="role-badge badge-teacher">👨‍🏫 Teacher</span>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Dashboard</a>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'students' %}active{% endif %}" href="{% url 'students' %}">Students</a>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'mark_page' %}active{% endif %}" href="{% url 'mark_page' %}">Attendance</a>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'report' %}active{% endif %}" href="{% url 'report' %}">Report</a>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'timetable' %}active{% endif %}" href="{% url 'timetable' %}">Timetable</a>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'leaves' %}active{% endif %}" href="{% url 'leaves' %}">Leaves</a>
+      {% if request.session.is_admin %}
+      <a class="nav-btn admin-btn {% if request.resolver_match.url_name == 'admin_panel' %}active{% endif %}" href="{% url 'admin_panel' %}">⚙ Admin</a>
+      {% endif %}
+      <a class="nav-btn notif-btn {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" href="{% url 'notifications' %}">🔔<span style="display:none;" class="notif-dot" data-unread-badge>0</span></a>
+      <div class="profile-menu" id="teacherProfileMenu">
+        <button type="button" class="profile-btn" id="teacherProfileBtn" title="Profile">
+          {% if navbar_teacher and navbar_teacher.photo %}
+            <img src="{{ navbar_teacher.photo.url }}" alt="{{ request.session.teacher_name }} profile" class="profile-avatar">
+          {% else %}
+            <span class="profile-initial">{{ request.session.teacher_name|default:"T"|first|upper }}</span>
+          {% endif %}
+          <span class="sr-only">Profile</span>
+        </button>
+        <div class="profile-dropdown" id="teacherProfileDropdown">
+          <div class="profile-head">
+            <div class="profile-head-pic">
+              {% if navbar_teacher and navbar_teacher.photo %}
+                <img src="{{ navbar_teacher.photo.url }}" alt="{{ request.session.teacher_name }} profile" class="profile-avatar">
+              {% else %}
+                <span class="profile-initial">{{ request.session.teacher_name|default:"T"|first|upper }}</span>
+              {% endif %}
+            </div>
+            <div class="profile-head-name">{{ request.session.teacher_name }}</div>
+          </div>
+          <a class="profile-action" href="{% url 'teacher_profile' %}">👤 See Profile</a>
+          {% if request.session.teacher_db_id and request.session.is_admin %}
+            <a class="profile-action" href="{% url 'edit_teacher' request.session.teacher_db_id %}">🖼 Edit Profile</a>
+          {% endif %}
+        </div>
+      </div>
+      <a class="nav-btn danger" href="{% url 'logout' %}">Logout</a>
+    {% elif request.session.role == 'student' %}
+      <span class="role-badge badge-student">🎓 {{ request.session.student_name }}</span>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}" href="{% url 'student_dashboard' %}">My Attendance</a>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'student_timetable' %}active{% endif %}" href="{% url 'student_timetable' %}">Timetable</a>
+      <a class="nav-btn {% if request.resolver_match.url_name == 'my_leaves' %}active{% endif %}" href="{% url 'my_leaves' %}">My Leave</a>
+      <a class="nav-btn notif-btn {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" href="{% url 'notifications' %}">🔔<span style="display:none;" class="notif-dot" data-unread-badge>0</span></a>
+      <div class="profile-menu" id="studentProfileMenu">
+        <button type="button" class="profile-btn" id="studentProfileBtn" title="Profile">
+          {% if navbar_student and navbar_student.photo %}
+            <img src="{{ navbar_student.photo.url }}" alt="{{ navbar_student.name }} profile" class="profile-avatar">
+          {% else %}
+            <span class="profile-initial">{{ request.session.student_name|default:"S"|first|upper }}</span>
+          {% endif %}
+          <span class="sr-only">Profile</span>
+        </button>
+        <div class="profile-dropdown" id="studentProfileDropdown">
+          <div class="profile-head">
+            <div class="profile-head-pic">
+              {% if navbar_student and navbar_student.photo %}
+                <img src="{{ navbar_student.photo.url }}" alt="{{ navbar_student.name }} profile" class="profile-avatar">
+              {% else %}
+                <span class="profile-initial">{{ request.session.student_name|default:"S"|first|upper }}</span>
+              {% endif %}
+            </div>
+            <div class="profile-head-name">{{ request.session.student_name }}</div>
+          </div>
+          <a class="profile-action" href="{% url 'student_profile' %}">👤 See Profile</a>
+          {% if request.session.student_id %}
+            <a class="profile-action" href="{% url 'edit_student' request.session.student_id %}">🖼 Edit Profile Picture</a>
+          {% endif %}
+        </div>
+      </div>
+      <a class="nav-btn danger" href="{% url 'logout' %}">Logout</a>
+    {% endif %}
+  </div>
+</nav>
+{% if messages %}
+<div class="message-container">
+  {% for msg in messages %}
+  <div class="custom-alert {% if msg.tags %}{{ msg.tags }}{% else %}success{% endif %}">
+    {% if msg.tags == 'error' %}⚠{% elif msg.tags == 'info' %}ℹ{% elif msg.tags == 'warning' %}⚡{% else %}✔{% endif %} {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+<div>{% block content %}{% endblock %}</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+setTimeout(()=>{ document.querySelectorAll('.custom-alert').forEach(a=>{ a.style.transition='opacity 0.5s,transform 0.5s'; a.style.opacity='0'; a.style.transform='translateX(120%)'; setTimeout(()=>a.remove(),500); }); },4000);
+// Notification badge
+fetch('/notifications/').then(r=>r.text()).then(html=>{
+  const m=html.match(/data-unread="(\d+)"/);
+  if(m&&parseInt(m[1])>0){
+    document.querySelectorAll('[data-unread-badge]').forEach(el=>{
+      el.textContent=m[1];
+      el.style.display='flex';
+    });
+  }
+}).catch(()=>{});
+
+const profileBtn = document.getElementById('studentProfileBtn');
+const profileDropdown = document.getElementById('studentProfileDropdown');
+if (profileBtn && profileDropdown) {
+  profileBtn.addEventListener('click', function (event) {
+    event.stopPropagation();
+    profileDropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', function (event) {
+    if (!profileDropdown.contains(event.target) && event.target !== profileBtn) {
+      profileDropdown.classList.remove('open');
+    }
+  });
+}
+
+const teacherProfileBtn = document.getElementById('teacherProfileBtn');
+const teacherProfileDropdown = document.getElementById('teacherProfileDropdown');
+if (teacherProfileBtn && teacherProfileDropdown) {
+  teacherProfileBtn.addEventListener('click', function (event) {
+    event.stopPropagation();
+    teacherProfileDropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', function (event) {
+    if (!teacherProfileDropdown.contains(event.target) && event.target !== teacherProfileBtn) {
+      teacherProfileDropdown.classList.remove('open');
+    }
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
+  :root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;}
+  body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+  .form-wrap{max-width:620px;margin:48px auto;padding:0 24px;}
+  .form-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;animation:fadeUp 0.5s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .form-title{font-family:'Playfair Display',serif;font-size:24px;margin-bottom:4px;color:var(--text);font-weight:600;}
+  .form-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+  .form-divider{height:1px;background:var(--border);margin:24px 0;}
+  .field{margin-bottom:20px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;}
+  .field input{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  .field textarea{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;resize:vertical;min-height:100px;font-family:'DM Sans',sans-serif;}
+  .field input:focus,.field textarea:focus{border-color:rgba(201,168,76,0.5);box-shadow:0 0 0 3px var(--accent-glow);}
+  .field input::placeholder,.field textarea::placeholder{color:var(--muted);}
+  .field input[type="date"]{color-scheme:dark;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0)) ,var(--input-bg);border-color:rgba(201,168,76,0.22);}
+  .field input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.9;filter:invert(75%) sepia(26%) saturate(584%) hue-rotate(9deg) brightness(100%) contrast(90%);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .btn-submit{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:14px;border:none;border-radius:10px;padding:13px 28px;cursor:pointer;transition:opacity 0.2s;width:100%;margin-top:8px;}
+  .btn-submit:hover{opacity:0.9;}
+  .btn-cancel{display:block;text-align:center;margin-top:12px;color:var(--muted);font-size:13px;text-decoration:none;}
+  .btn-cancel:hover{color:var(--accent);}
+  .info-badge{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:12px;margin-bottom:20px;font-size:13px;color:var(--text);}
+  .error-msg{background:rgba(224,92,92,0.1);border:1px solid rgba(224,92,92,0.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:#f08080;}
+  .success-msg{background:rgba(76,175,130,0.1);border:1px solid rgba(76,175,130,0.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:#4caf82;}
+</style>
+
+<div class="form-wrap">
+  <div class="form-card">
+    <div class="form-title">📋 Apply for Leave</div>
+    <div class="form-sub">Submit your leave request for admin review</div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="{% if message.tags == 'error' %}error-msg{% else %}success-msg{% endif %}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="info-badge">
+      ℹ️ <strong>{{ teacher.name }}</strong><br>
+      Your leave request will be reviewed by the admin and you will be notified of the decision.
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="row2">
+        <div class="field">
+          <label for="fromDate">From Date *</label>
+          <input id="fromDate" type="date" name="from_date" min="{{ today }}" required>
+        </div>
+        <div class="field">
+          <label for="toDate">To Date *</label>
+          <input id="toDate" type="date" name="to_date" min="{{ today }}" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="reason">Reason for Leave *</label>
+        <textarea id="reason" name="reason" placeholder="Please provide a reason for your leave request..." required></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit">✅ Submit Leave Request</button>
+    </form>
+    <a href="{% url 'home' %}" class="btn-cancel">← Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

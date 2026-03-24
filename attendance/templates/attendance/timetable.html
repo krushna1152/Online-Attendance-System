@@ -1,0 +1,231 @@
+{% extends "attendance/base.html" %}
+{% block title %}Timetable — EduTrack{% endblock %}
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;--green:#4caf82;--blue:#5b8dee;--purple:#9b72f7;}
+  body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+  .page{max-width:1100px;margin:0 auto;padding:40px 24px;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Header */
+  .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;animation:fadeUp .4s ease both;flex-wrap:wrap;gap:14px;}
+  .page-header h1{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:4px;}
+  .page-header p{font-size:13px;color:var(--muted);}
+
+  /* Class selector */
+  .class-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+  .class-tab{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:9px;padding:8px 18px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;transition:all .2s;}
+  .class-tab:hover{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.3);color:var(--accent);}
+  .class-tab.active{background:rgba(201,168,76,0.14);border-color:rgba(201,168,76,0.45);color:#e8c96a;}
+
+  /* Grid layout */
+  .tt-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:28px;}
+  @media(max-width:900px){.tt-grid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:500px){.tt-grid{grid-template-columns:repeat(2,1fr);}}
+
+  /* Day column */
+  .day-col{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;animation:fadeUp .5s ease both;}
+  .day-col:nth-child(1){animation-delay:.05s;} .day-col:nth-child(2){animation-delay:.1s;}
+  .day-col:nth-child(3){animation-delay:.15s;} .day-col:nth-child(4){animation-delay:.2s;}
+  .day-col:nth-child(5){animation-delay:.25s;} .day-col:nth-child(6){animation-delay:.3s;}
+
+  .day-header{background:rgba(201,168,76,0.08);border-bottom:1px solid rgba(201,168,76,0.15);padding:10px 14px;font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;}
+
+  .day-body{padding:10px;}
+
+  /* Lecture card */
+  .lecture{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:9px;padding:10px 12px;margin-bottom:8px;position:relative;transition:all .2s;}
+  .lecture:last-child{margin-bottom:0;}
+  .lecture:hover{border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.04);}
+  .lecture-time{font-size:10px;color:var(--accent);font-weight:700;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);padding:2px 7px;border-radius:20px;display:inline-block;margin-bottom:6px;}
+  .lecture-subject{font-size:13px;font-weight:600;color:#f0ece4;margin-bottom:3px;}
+  .lecture-teacher{font-size:11px;color:var(--muted);}
+  .lecture-del{position:absolute;top:8px;right:8px;background:rgba(224,92,92,0.12);border:none;border-radius:6px;color:var(--red);font-size:11px;padding:3px 7px;cursor:pointer;opacity:0;transition:opacity .2s;}
+  .lecture:hover .lecture-del{opacity:1;}
+
+  .no-lecture{text-align:center;padding:20px 8px;color:var(--muted);font-size:11px;opacity:.6;}
+
+  /* Add form */
+  .add-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;animation:fadeUp .5s ease both;animation-delay:.35s;}
+  .add-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+  .add-title::after{content:'';flex:1;height:1px;background:var(--border);}
+  .form-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;align-items:end;}
+  .field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+  .field select,.field input[type=time]{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;}
+  .field select:focus,.field input[type=time]:focus{border-color:rgba(201,168,76,.5);box-shadow:0 0 0 3px var(--accent-glow);}
+  .field select option{background:#1e2230;}
+  .field input[type=time]{
+    color-scheme:dark;
+    background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0)), var(--input-bg);
+    border-color:rgba(201,168,76,0.22);
+  }
+  .field input[type=time]:hover{border-color:rgba(201,168,76,0.45);box-shadow:0 0 0 2px rgba(201,168,76,0.14);}
+  .field input[type=time]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.9;filter:invert(75%) sepia(26%) saturate(584%) hue-rotate(9deg) brightness(100%) contrast(90%);}
+  .btn-add{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:13px;border:none;border-radius:9px;padding:10px 22px;cursor:pointer;white-space:nowrap;transition:opacity .2s;height:40px;}
+  .btn-add:hover{opacity:.9;}
+
+  .empty-state{text-align:center;padding:48px 24px;color:var(--muted);}
+  .empty-icon{font-size:40px;margin-bottom:12px;}
+
+  /* Subject color dots */
+  .sub-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+</style>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>📅 Timetable</h1>
+      <p>Weekly lecture schedule per class</p>
+    </div>
+    {% if selected_class %}
+    <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;color:var(--accent);">{{ selected_class.name }}</span>
+    {% endif %}
+  </div>
+
+  {% if classes %}
+  <!-- Class selector tabs -->
+  <div class="class-tabs">
+    {% for c in classes %}
+    <a href="?class_id={{ c.id }}" class="class-tab {% if class_id == c.id|stringformat:'s' %}active{% endif %}">{{ c.name }}</a>
+    {% endfor %}
+  </div>
+
+  {% if selected_class %}
+
+  <!-- Weekly timetable grid -->
+  <div class="tt-grid">
+    {% for day in days %}
+    <div class="day-col">
+      <div class="day-header">{{ day }}</div>
+      <div class="day-body">
+        {% with day_schedule=schedule|default_if_none:'' %}
+        {% if schedule %}
+          {% for entry in schedule|dictsort:day %}
+          {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% for day_name, entries in schedule.items %}
+          {% if day_name == day %}
+            {% for entry in entries %}
+            <div class="lecture">
+              <div class="lecture-time">{{ entry.start_time|time:"H:i" }} – {{ entry.end_time|time:"H:i" }}</div>
+              <div class="lecture-subject">{{ entry.subject.name }}</div>
+              {% if entry.teacher %}<div class="lecture-teacher">👨‍🏫 {{ entry.teacher.name }}</div>{% endif %}
+              <form method="POST" action="{% url 'delete_timetable' entry.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="lecture-del" onclick="return confirm('Remove this lecture?')">✕</button>
+              </form>
+            </div>
+            {% empty %}
+            <div class="no-lecture">No lectures</div>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Add lecture form -->
+  <div class="add-card">
+    <div class="add-title">➕ Add Lecture</div>
+    <form method="POST" action="{% url 'add_timetable' %}">
+      {% csrf_token %}
+      <input type="hidden" name="class_section" value="{{ selected_class.id }}">
+      <div class="form-row">
+        <div class="field">
+          <label for="ttDay">Day *</label>
+          <select id="ttDay" name="day" required>
+            <option value="">— Select Day —</option>
+            {% for day in days %}
+            <option value="{{ day }}">{{ day }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="ttSubject">Subject *</label>
+          <select id="ttSubject" name="subject" required>
+            <option value="">— Select Subject —</option>
+            {% for s in subjects %}
+            <option value="{{ s.id }}" data-teacher-id="{{ s.teacher.id|default:'' }}">{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="ttTeacher">Teacher</label>
+          <select id="ttTeacher" name="teacher">
+            <option value="">— No Teacher —</option>
+            {% for t in teachers %}
+            <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="ttStart">Start Time *</label>
+          <input id="ttStart" type="time" name="start_time" required>
+        </div>
+        <div class="field">
+          <label for="ttEnd">End Time *</label>
+          <input id="ttEnd" type="time" name="end_time" required>
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end;">
+          <button type="submit" class="btn-add">+ Add Lecture</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🏫</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:8px;">No classes created yet</div>
+    <div style="font-size:13px;margin-bottom:20px;">Create a class first before adding a timetable.</div>
+    <a href="{% url 'classes' %}" style="background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:13px;border-radius:10px;padding:10px 24px;text-decoration:none;">Go to Classes →</a>
+  </div>
+  {% endif %}
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var subjectSelect = document.getElementById('ttSubject');
+    var teacherSelect = document.getElementById('ttTeacher');
+    var startInput = document.getElementById('ttStart');
+    var endInput = document.getElementById('ttEnd');
+
+    if (subjectSelect && teacherSelect) {
+      subjectSelect.addEventListener('change', function () {
+        var selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
+        var teacherId = selectedOption ? selectedOption.getAttribute('data-teacher-id') : '';
+
+        if (teacherId && teacherSelect.querySelector('option[value="' + teacherId + '"]')) {
+          teacherSelect.value = teacherId;
+        } else {
+          teacherSelect.value = '';
+        }
+      });
+    }
+
+    // No separate AM/PM buttons: ensure a default time exists as soon as picker is opened/clicked.
+    function ensureDefaultTime(input, fallbackTime) {
+      if (!input || input.value) {
+        return;
+      }
+      input.value = fallbackTime;
+    }
+
+    if (startInput) {
+      startInput.addEventListener('pointerdown', function () { ensureDefaultTime(startInput, '09:00'); });
+      startInput.addEventListener('focus', function () { ensureDefaultTime(startInput, '09:00'); });
+    }
+
+    if (endInput) {
+      endInput.addEventListener('pointerdown', function () { ensureDefaultTime(endInput, '10:00'); });
+      endInput.addEventListener('focus', function () { ensureDefaultTime(endInput, '10:00'); });
+    }
+
+  });
+</script>
+{% endblock %}

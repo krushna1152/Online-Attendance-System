@@ -1,0 +1,68 @@
+{% extends "attendance/base.html" %}
+{% block title %}Subjects — EduTrack{% endblock %}
+{% block content %}
+<style>
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;}
+body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+.page{max-width:1000px;margin:0 auto;padding:40px 24px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;animation:fadeUp .4s ease both;}
+.page-header h1{font-family:'Playfair Display',serif;font-size:24px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media(max-width:700px){.grid2{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;animation:fadeUp .5s ease both;animation-delay:.1s;}
+.card-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+.field input,.field select{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:rgba(201,168,76,.5);}
+.field input::placeholder{color:var(--muted);}
+.field select option{background:#1e2230;}
+.btn-gold{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:13px;border:none;border-radius:10px;padding:10px 20px;cursor:pointer;width:100%;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:8px;border-bottom:1px solid var(--border);text-align:left;}
+.tbl td{padding:11px 8px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.sub-badge{background:rgba(201,168,76,0.12);color:var(--accent);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.subject-name{display:inline-block;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;}
+.del-btn{background:rgba(224,92,92,0.15);color:var(--red);border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;}
+</style>
+<div class="page">
+  <div class="page-header">
+    <div><h1>📚 Subjects</h1><p>Manage subjects for subject-wise attendance</p></div>
+    <a href="{% url 'classes' %}" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:9px 16px;font-size:13px;color:#d0d0d8;text-decoration:none;">🏫 Classes →</a>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">➕ Add Subject</div>
+      <form method="POST" action="{% url 'add_subject' %}">
+        {% csrf_token %}
+        <div class="field"><label for="subjectName">Subject Name *</label><input id="subjectName" type="text" name="name" required placeholder="e.g. Mathematics, Physics"></div>
+        <div class="field"><label for="subjectClass">Class</label><select id="subjectClass" name="class_section"><option value="">— All Classes —</option>{% for c in classes %}<option value="{{ c.id }}">{{ c }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="subjectTeacher">Teacher</label><select id="subjectTeacher" name="teacher"><option value="">— No Teacher —</option>{% for t in teachers %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></div>
+        <button type="submit" class="btn-gold">✅ Add Subject</button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 All Subjects</div>
+      {% if subjects %}
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Subject</th><th>Class</th><th>Teacher</th><th></th></tr></thead>
+        <tbody>
+          {% for s in subjects %}
+          <tr>
+            <td style="color:var(--muted);">{{ forloop.counter }}</td>
+            <td><span class="sub-badge subject-name" title="{{ s.name }}">{{ s.name }}</span></td>
+            <td style="color:var(--muted);font-size:12px;">{{ s.class_section|default:"General" }}</td>
+            <td style="color:var(--muted);font-size:12px;">{{ s.teacher.name|default:"—" }}</td>
+            <td><a href="{% url 'delete_subject' s.id %}" class="del-btn" onclick="return confirm('Delete subject {{ s.name }}?')">🗑</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div style="text-align:center;padding:28px 0;color:var(--muted);font-size:13px;">No subjects yet.</div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,346 @@
+{% extends "attendance/base.html" %}
+{% load custom_filters %}
+{% block title %}My Attendance — EduTrack{% endblock %}
+{% block content %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;--green:#4caf82;--blue:#5b8dee;}
+body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+.page{max-width:1100px;margin:0 auto;padding:40px 24px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:16px;animation:fadeUp .4s ease both;position:relative;z-index:1200;}
+.header h1{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:4px;}
+.header p{font-size:13px;color:var(--muted);}
+.class-chip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 10px;border-radius:999px;background:rgba(91,141,238,0.14);border:1px solid rgba(91,141,238,0.35);color:#8cb3ff;font-size:11px;font-weight:700;letter-spacing:.3px;}
+.class-chip.unassigned{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.28);color:#f8b84e;}
+.btn-leave{background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--accent);padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;transition:background .2s;}
+.btn-leave:hover{background:rgba(201,168,76,0.2);color:var(--accent);}
+.profile-menu{position:relative;display:inline-flex;align-items:center;z-index:1300;}
+.profile-btn{width:38px;height:38px;border-radius:50%;border:1px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.08);padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;}
+.profile-btn:hover{border-color:rgba(201,168,76,0.6);box-shadow:0 0 0 3px rgba(201,168,76,0.18);}
+.profile-avatar{width:100%;height:100%;object-fit:cover;display:block;}
+.profile-initial{font-size:14px;font-weight:700;color:var(--accent);line-height:1;}
+.profile-dropdown{position:absolute;top:46px;right:0;min-width:190px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px;box-shadow:0 12px 28px rgba(0,0,0,0.45);display:none;z-index:1400;}
+.profile-dropdown.open{display:block;}
+.profile-action{display:block;padding:8px 10px;border-radius:8px;color:var(--text);font-size:12px;text-decoration:none;}
+.profile-action:hover{background:rgba(201,168,76,0.08);color:var(--accent);}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+/* Stat cards */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+@media(max-width:800px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 18px;position:relative;overflow:hidden;animation:fadeUp .5s ease both;}
+.stat:nth-child(1){animation-delay:.05s;} .stat:nth-child(2){animation-delay:.1s;} .stat:nth-child(3){animation-delay:.15s;} .stat:nth-child(4){animation-delay:.2s;}
+.stat-glow{position:absolute;top:-20px;right:-20px;width:70px;height:70px;border-radius:50%;opacity:.15;filter:blur(16px);}
+.stat-icon{font-size:20px;margin-bottom:10px;}
+.stat-val{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;line-height:1;margin-bottom:4px;}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;}
+/* Prediction */
+.pred-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;animation:fadeUp .5s ease both;animation-delay:.25s;}
+.pred-icon{font-size:28px;}
+.pred-text{flex:1;}
+.pred-title{font-weight:600;font-size:14px;margin-bottom:4px;}
+.pred-sub{font-size:13px;color:var(--muted);}
+.pred-pct-bar{flex:1;min-width:160px;}
+.pct-wrap{background:rgba(255,255,255,0.06);border-radius:99px;height:8px;overflow:hidden;margin-bottom:6px;}
+.pct-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.16,1,.3,1);}
+.pct-fill.ok{background:linear-gradient(90deg,#4caf82,#6ddaa0);}
+.pct-fill.warn{background:linear-gradient(90deg,#f59e0b,#fcd34d);}
+.pct-fill.bad{background:linear-gradient(90deg,#e05c5c,#f08080);}
+/* Two-column */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px;}
+@media(max-width:800px){.row2{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;animation:fadeUp .5s ease both;animation-delay:.3s;}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;}
+.cal-head .card-title{margin-bottom:0;}
+.cal-nav-group{display:flex;gap:6px;}
+.cal-nav{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;color:var(--accent);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);transition:background .15s,border-color .15s;}
+.cal-nav:hover{background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.45);}
+/* ── Calendar (match dashboard look) ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-day-name{text-align:center;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0;}
+.cal-day{min-height:34px;text-align:center;padding:7px 4px;border-radius:8px;font-size:13px;cursor:default;color:var(--muted);transition:background .15s,color .15s,border-color .15s;border:1px solid transparent;display:flex;align-items:center;justify-content:center;position:relative;font-weight:500;}
+.cal-day:hover:not(.empty){background:rgba(201,168,76,0.12);color:var(--accent);border-color:rgba(201,168,76,0.2);}
+.cal-day.present{background:rgba(76,175,130,0.12);border-color:rgba(76,175,130,0.3);color:#79d6a8;}
+.cal-day.absent{background:rgba(224,92,92,0.12);border-color:rgba(224,92,92,0.28);color:#ee9a9a;}
+.cal-day.holiday{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.28);color:#f8b84e;}
+.cal-day.today{color:var(--accent);font-weight:700;box-shadow:0 0 0 1px var(--accent) inset;}
+.cal-day[data-date]{cursor:pointer;}
+.cal-day.selected{box-shadow:0 0 0 1px rgba(201,168,76,0.65) inset;background:rgba(201,168,76,0.12);color:var(--accent);}
+.cal-day.empty{pointer-events:none;opacity:0;}
+.cal-day-name:nth-child(6),.cal-day-name:nth-child(7){color:rgba(122,122,138,0.75);}
+.cal-dot{width:5px;height:5px;border-radius:50%;position:absolute;bottom:4px;}
+.cal-dot.present{background:#4caf82;}
+.cal-dot.absent{background:#e05c5c;}
+.cal-dot.holiday{background:#f59e0b;}
+.cal-event{margin-top:12px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);}
+.cal-event-date{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.cal-event-text{font-size:13px;color:#e9e5dd;font-weight:600;}
+.cal-event.kind-present .cal-event-text{color:#79d6a8;}
+.cal-event.kind-absent .cal-event-text{color:#ee9a9a;}
+.cal-event.kind-holiday .cal-event-text{color:#f8b84e;}
+/* Attendance table */
+.att-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.att-tbl th{color:#9ca3b5;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:8px 0;border-bottom:1px solid var(--border);text-align:left;font-weight:700;}
+.att-tbl td{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);color:#e9e5dd;}
+.att-tbl tr:last-child td{border-bottom:none;}
+.rec-date{font-weight:600;color:#f0ece4;}
+.rec-subject{color:#d8d4c8;}
+.rec-note{color:#b7b2a4;font-size:11px;}
+.rec-actions{margin-top:14px;display:flex;gap:8px;}
+.btn-soft{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:#e7e2d6;padding:8px 16px;border-radius:9px;font-size:12px;text-decoration:none;font-weight:600;}
+.btn-soft:hover{border-color:rgba(201,168,76,0.35);color:var(--accent);}
+.status-pill{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;}
+.status-Present{background:rgba(76,175,130,0.15);color:#4caf82;}
+.status-Absent{background:rgba(224,92,92,0.15);color:#e05c5c;}
+/* Legend */
+.legend{display:flex;gap:12px;font-size:11px;color:var(--muted);flex-wrap:wrap;margin-bottom:12px;}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:11px;height:11px;border-radius:3px;border:1px solid transparent;}
+.ld-p{background:rgba(201,168,76,0.22);border-color:rgba(201,168,76,0.45);}
+.ld-a{background:rgba(180,50,50,0.28);border-color:rgba(200,70,70,0.38);}
+.ld-h{background:rgba(245,158,11,0.22);border-color:rgba(245,158,11,0.45);}
+.ld-n{background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.07);}
+</style>
+
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>{{ greeting }}, {{ student.name }} 👋</h1>
+      <p>Here's your attendance overview</p>
+      {% if student.class_section %}
+        <div class="class-chip">🏫 Class: {{ student.class_section.name }}</div>
+      {% else %}
+        <div class="class-chip unassigned">⚠ Class not assigned</div>
+      {% endif %}
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      {% if pending_leaves > 0 %}<span style="font-size:12px;color:var(--accent);">⏳ {{ pending_leaves }} leave(s) pending</span>{% endif %}
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-glow" style="background:#c9a84c;"></div><div class="stat-icon">📋</div><div class="stat-val" style="color:var(--accent);">{{ total }}</div><div class="stat-lbl">Total Classes</div></div>
+    <div class="stat"><div class="stat-glow" style="background:#4caf82;"></div><div class="stat-icon">✅</div><div class="stat-val" style="color:#4caf82;">{{ present }}</div><div class="stat-lbl">Present</div></div>
+    <div class="stat"><div class="stat-glow" style="background:#e05c5c;"></div><div class="stat-icon">❌</div><div class="stat-val" style="color:#e05c5c;">{{ absent }}</div><div class="stat-lbl">Absent</div></div>
+    {% if percentage >= threshold %}
+    <div class="stat"><div class="stat-glow" style="background:#4caf82;"></div><div class="stat-icon">📊</div><div class="stat-val" style="color:#4caf82;">{{ percentage }}%</div><div class="stat-lbl">Attendance</div></div>
+    {% elif percentage >= 65 %}
+    <div class="stat"><div class="stat-glow" style="background:#f59e0b;"></div><div class="stat-icon">📊</div><div class="stat-val" style="color:#f59e0b;">{{ percentage }}%</div><div class="stat-lbl">Attendance</div></div>
+    {% else %}
+    <div class="stat"><div class="stat-glow" style="background:#e05c5c;"></div><div class="stat-icon">📊</div><div class="stat-val" style="color:#e05c5c;">{{ percentage }}%</div><div class="stat-lbl">Attendance</div></div>
+    {% endif %}
+  </div>
+
+  <!-- Prediction bar -->
+  <div class="pred-bar">
+    <div class="pred-icon">{% if percentage >= threshold %}🎯{% elif can_miss > 0 %}⚡{% else %}🚨{% endif %}</div>
+    <div class="pred-text">
+      {% if percentage >= threshold %}
+        <div class="pred-title" style="color:#4caf82;">You're on track! ✅</div>
+        <div class="pred-sub">You can miss <strong style="color:var(--text);">{{ can_miss }} more class(es)</strong> before dropping below {{ threshold }}%</div>
+      {% elif can_miss > 0 %}
+        <div class="pred-title" style="color:#f59e0b;">⚠️ Attendance dropping</div>
+        <div class="pred-sub">You can only miss <strong style="color:#f59e0b;">{{ can_miss }} more class(es)</strong> before hitting {{ threshold }}%</div>
+      {% else %}
+        <div class="pred-title" style="color:#e05c5c;">🚨 Below required attendance</div>
+        <div class="pred-sub">Your attendance is below {{ threshold }}%. Attend all classes to improve.</div>
+      {% endif %}
+    </div>
+    <div class="pred-pct-bar">
+      <div class="pct-wrap">
+        {% if percentage >= threshold %}
+        <div class="pct-fill ok" data-width="{{ percentage }}"></div>
+        {% elif percentage >= 65 %}
+        <div class="pct-fill warn" data-width="{{ percentage }}"></div>
+        {% else %}
+        <div class="pct-fill bad" data-width="{{ percentage }}"></div>
+        {% endif %}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">
+        <span>0%</span><span style="color:var(--text);font-weight:600;">{{ percentage }}%</span><span>{{ threshold }}% required</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="row2">
+    <!-- Calendar -->
+    <div class="card">
+      <div class="cal-head">
+        <div class="card-title">
+          📅 <span id="calMonthLabel">{{ cal_month }}</span>
+          <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:4px;">{{ today }}</span>
+        </div>
+        <div class="cal-nav-group">
+          <button type="button" class="cal-nav" id="calPrevBtn" data-month="{{ prev_cal_month }}" title="Previous month" aria-label="Previous month">&#8592;</button>
+          <button type="button" class="cal-nav" id="calNextBtn" data-month="{{ next_cal_month }}" title="Next month" aria-label="Next month">&#8594;</button>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot ld-p"></div> Present</div>
+        <div class="legend-item"><div class="legend-dot ld-a"></div> Absent</div>
+        <div class="legend-item"><div class="legend-dot ld-h"></div> Holiday</div>
+        <div class="legend-item"><div class="legend-dot ld-n"></div> Not Marked</div>
+      </div>
+      <div class="cal-grid" id="calendarGrid">
+        {% for d in "Mon,Tue,Wed,Thu,Fri,Sat,Sun"|split:"," %}<div class="cal-day-name">{{ d }}</div>{% endfor %}
+        <!-- Blank cells -->
+        {% for i in calendar_blank %}<div class="cal-day empty"></div>{% endfor %}
+        {% for day in calendar_days %}
+        <div class="cal-day {% if day.is_today %}today{% endif %}" data-date="{{ day.date|date:'Y-m-d' }}" data-event-kind="{% if day.holiday %}holiday{% elif day.status == 'Present' %}present{% elif day.status == 'Absent' %}absent{% else %}none{% endif %}" data-event-text="{% if day.holiday %}Holiday: {{ day.holiday }}{% elif day.status %}{{ day.status }}{% else %}Not marked{% endif %}" title="{% if day.holiday %}{{ day.holiday }}{% else %}{{ day.status|default:'Not marked' }}{% endif %}">
+          {{ day.date.day }}
+          {% if day.status or day.holiday %}<span class="cal-dot {% if day.holiday %}holiday{% elif day.status == 'Present' %}present{% elif day.status == 'Absent' %}absent{% endif %}"></span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="cal-event" id="calEventBox">
+        <div class="cal-event-date" id="calEventDate">Select a date</div>
+        <div class="cal-event-text" id="calEventText">Click any date to view event details</div>
+      </div>
+    </div>
+
+    <!-- Recent records -->
+    <div class="card">
+      <div class="card-title">🕒 Recent Records</div>
+      {% if all_attendance %}
+      <table class="att-tbl">
+        <thead><tr><th>Date</th><th>Subject</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody>
+          {% for att in all_attendance|slice:":15" %}
+          <tr>
+            <td class="rec-date">{{ att.date }}</td>
+            <td class="rec-subject">{{ att.subject.name|default:"General" }}</td>
+            <td><span class="status-pill status-{{ att.status }}">{{ att.status }}</span></td>
+            <td class="rec-note">{{ att.note|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div style="text-align:center;padding:28px 0;color:var(--muted);font-size:13px;">No records yet.</div>{% endif %}
+      <div class="rec-actions">
+        <a href="{% url 'download_excel' %}" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.25);color:var(--accent);padding:8px 16px;border-radius:9px;font-size:12px;font-weight:600;text-decoration:none;">📥 Download Excel</a>
+        <a href="{% url 'download_pdf' %}" style="background:rgba(91,141,238,0.12);border:1px solid rgba(91,141,238,0.28);color:#8cb3ff;padding:8px 16px;border-radius:9px;font-size:12px;font-weight:600;text-decoration:none;">🧾 Download PDF</a>
+        <a href="{% url 'edit_student' student.id %}" class="btn-soft">✏ Edit Profile</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var calendarApiUrl = "{% url 'student_calendar_data' %}";
+
+    document.querySelectorAll('.pct-fill[data-width]').forEach(function (el) {
+      var pct = parseFloat(el.getAttribute('data-width'));
+      if (Number.isFinite(pct)) {
+        el.style.width = Math.max(0, Math.min(100, pct)) + '%';
+      }
+    });
+
+    var calEventBox = document.getElementById('calEventBox');
+    var calEventDate = document.getElementById('calEventDate');
+    var calEventText = document.getElementById('calEventText');
+    var calendarGrid = document.getElementById('calendarGrid');
+    var calMonthLabel = document.getElementById('calMonthLabel');
+    var calPrevBtn = document.getElementById('calPrevBtn');
+    var calNextBtn = document.getElementById('calNextBtn');
+
+    function formatDateLabel(isoDate) {
+      var parsed = new Date(isoDate + 'T00:00:00');
+      if (Number.isNaN(parsed.getTime())) {
+        return isoDate;
+      }
+      return parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function bindDayCellEvents() {
+      var dayCells = document.querySelectorAll('.cal-day[data-date]');
+      dayCells.forEach(function (cell) {
+        cell.addEventListener('click', function () {
+          dayCells.forEach(function (el) { el.classList.remove('selected'); });
+          cell.classList.add('selected');
+
+          var eventKind = cell.getAttribute('data-event-kind') || 'none';
+          var eventText = cell.getAttribute('data-event-text') || 'Not marked';
+          var dateValue = cell.getAttribute('data-date') || '';
+
+          calEventBox.classList.remove('kind-present', 'kind-absent', 'kind-holiday');
+          if (eventKind === 'present') calEventBox.classList.add('kind-present');
+          if (eventKind === 'absent') calEventBox.classList.add('kind-absent');
+          if (eventKind === 'holiday') calEventBox.classList.add('kind-holiday');
+
+          calEventDate.textContent = formatDateLabel(dateValue);
+          calEventText.textContent = eventText;
+        });
+      });
+    }
+
+    function renderCalendarFromData(data) {
+      var dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      var html = '';
+
+      dayNames.forEach(function (name) {
+        html += '<div class="cal-day-name">' + name + '</div>';
+      });
+
+      data.calendar_blank.forEach(function () {
+        html += '<div class="cal-day empty"></div>';
+      });
+
+      data.calendar_days.forEach(function (day) {
+        var dayClass = 'cal-day';
+        if (day.is_today) dayClass += ' today';
+
+        var eventKind = day.holiday ? 'holiday' : (day.status === 'Present' ? 'present' : (day.status === 'Absent' ? 'absent' : 'none'));
+        var eventText = day.holiday ? ('Holiday: ' + day.holiday) : (day.status || 'Not marked');
+        var titleText = day.holiday || day.status || 'Not marked';
+
+        html += '<div class="' + dayClass + '" data-date="' + day.date + '" data-event-kind="' + eventKind + '" data-event-text="' + eventText.replace(/"/g, '&quot;') + '" title="' + titleText.replace(/"/g, '&quot;') + '">';
+        html += day.day;
+        if (day.status || day.holiday) {
+          var dotClass = day.holiday ? 'holiday' : (day.status === 'Present' ? 'present' : (day.status === 'Absent' ? 'absent' : ''));
+          html += '<span class="cal-dot ' + dotClass + '"></span>';
+        }
+        html += '</div>';
+      });
+
+      calendarGrid.innerHTML = html;
+      bindDayCellEvents();
+
+      calEventBox.classList.remove('kind-present', 'kind-absent', 'kind-holiday');
+      calEventDate.textContent = 'Select a date';
+      calEventText.textContent = 'Click any date to view event details';
+    }
+
+    function loadCalendarMonth(monthValue) {
+      if (!monthValue) return;
+      fetch(calendarApiUrl + '?cal_month=' + encodeURIComponent(monthValue), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          if (data.error) return;
+          calMonthLabel.textContent = data.cal_month;
+          calPrevBtn.setAttribute('data-month', data.prev_cal_month);
+          calNextBtn.setAttribute('data-month', data.next_cal_month);
+          renderCalendarFromData(data);
+        })
+        .catch(function () {
+          // Keep existing month if request fails.
+        });
+    }
+
+    if (calPrevBtn && calNextBtn) {
+      calPrevBtn.addEventListener('click', function () {
+        loadCalendarMonth(calPrevBtn.getAttribute('data-month'));
+      });
+      calNextBtn.addEventListener('click', function () {
+        loadCalendarMonth(calNextBtn.getAttribute('data-month'));
+      });
+    }
+
+    bindDayCellEvents();
+  });
+</script>
+{% endblock %}

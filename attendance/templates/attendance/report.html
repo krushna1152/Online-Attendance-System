@@ -1,0 +1,220 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
+  :root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;--green:#4caf82;--blue:#5b8dee;}
+  body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+  .page{max-width:1100px;margin:0 auto;padding:48px 24px;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .page-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;animation:fadeUp 0.4s ease both;}
+  .page-header h1{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:4px;}
+  .page-header p{font-size:13px;color:var(--muted);}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity 0.2s,transform 0.15s;}
+  .btn:hover{opacity:0.85;transform:translateY(-1px);}
+  .btn-gold{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;}
+  .btn-outline{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);}
+  .btn-warn{background:rgba(224,92,92,0.15);color:var(--red);border:1px solid rgba(224,92,92,0.2);}
+
+  /* Summary cards */
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+  @media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr;}}
+  .sum-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;animation:fadeUp 0.5s ease both;}
+  .sum-card:nth-child(1){animation-delay:0.05s;} .sum-card:nth-child(2){animation-delay:0.1s;} .sum-card:nth-child(3){animation-delay:0.15s;}
+  .sum-val{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;margin-bottom:4px;}
+  .sum-lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;}
+
+  /* Filter card */
+  .filter-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin-bottom:24px;animation:fadeUp 0.5s ease both;animation-delay:0.2s;}
+  .filter-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+  .filter-field{flex:1;min-width:160px;}
+  .filter-field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+  .filter-field input{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  .filter-field input:focus{border-color:rgba(201,168,76,0.5);box-shadow:0 0 0 3px var(--accent-glow);}
+  .filter-field input::placeholder{color:var(--muted);}
+  .filter-field input[type="date"]{
+    color-scheme:dark;
+    background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0)) ,var(--input-bg);
+    border-color:rgba(201,168,76,0.22);
+  }
+  .filter-field input[type="date"]::-webkit-calendar-picker-indicator{
+    cursor:pointer;
+    opacity:.9;
+    filter:invert(75%) sepia(26%) saturate(584%) hue-rotate(9deg) brightness(100%) contrast(90%);
+  }
+  .filter-field input[type="date"]:hover{
+    border-color:rgba(201,168,76,0.45);
+    box-shadow:0 0 0 2px rgba(201,168,76,0.14);
+  }
+
+  /* Chart */
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;margin-bottom:24px;animation:fadeUp 0.5s ease both;animation-delay:0.25s;}
+  .chart-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--accent);margin-bottom:20px;}
+
+  /* Table */
+  .table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;animation:fadeUp 0.5s ease both;animation-delay:0.3s;}
+  .tbl{width:100%;border-collapse:collapse;font-size:14px;}
+  .tbl th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;}
+  .tbl td{padding:13px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tr:hover td{background:rgba(201,168,76,0.03);}
+  .roll-badge{background:rgba(201,168,76,0.12);color:var(--accent);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .pct-cell{display:flex;align-items:center;gap:10px;}
+  .pct-bar{flex:1;max-width:100px;background:rgba(255,255,255,0.06);border-radius:99px;height:6px;overflow:hidden;}
+  .pct-fill{height:100%;border-radius:99px;}
+  .pct-fill.ok{background:linear-gradient(90deg,#4caf82,#6ddaa0);}
+  .pct-fill.low{background:linear-gradient(90deg,#e05c5c,#f08080);}
+  .low-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(224,92,92,0.15);color:var(--red);font-weight:600;}
+  .empty-state{text-align:center;padding:48px 0;color:var(--muted);}
+</style>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>📊 Attendance Report</h1>
+      <p>Overview of all student attendance records</p>
+    </div>
+    <div class="btn-row">
+      <a href="{% url 'download_excel' %}" class="btn btn-gold">📥 Export Excel</a>
+      <a href="{% url 'send_alerts' %}" class="btn btn-warn" onclick="return confirm('Send alert emails to all students below {{ threshold }}% attendance?')">📧 Send Alerts</a>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-grid">
+    <div class="sum-card">
+      <div class="sum-val" style="color:var(--accent);">{{ report_data|length }}</div>
+      <div class="sum-lbl">Total Students</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-val" style="color:var(--green);">{{ above_count }}</div>
+      <div class="sum-lbl">Above {{ threshold }}%</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-val" style="color:var(--red);">{{ below_count }}</div>
+      <div class="sum-lbl">Below {{ threshold }}%</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-card">
+    <form method="get" class="filter-row">
+      <div class="filter-field">
+        <label for="reportSearch">🔍 Search Student</label>
+        <input id="reportSearch" type="text" name="q" value="{{ query|default:'' }}" placeholder="Name or roll number…">
+      </div>
+      <div class="filter-field">
+        <label for="reportDateFrom">📅 From Date</label>
+        <input id="reportDateFrom" type="date" name="date_from" value="{{ date_from|default:'' }}">
+      </div>
+      <div class="filter-field">
+        <label for="reportDateTo">📅 To Date</label>
+        <input id="reportDateTo" type="date" name="date_to" value="{{ date_to|default:'' }}">
+      </div>
+      <button type="submit" class="btn btn-gold">Apply</button>
+      {% if query or date_from or date_to %}
+      <a href="{% url 'report' %}" class="btn btn-outline">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Bar Chart -->
+  {% if report_data %}
+  <div class="chart-card">
+    <div class="chart-title">📈 Attendance % per Student</div>
+    <canvas id="reportChart" height="80"></canvas>
+  </div>
+  {% endif %}
+
+  <!-- Table -->
+  <div class="table-card">
+    {% if report_data %}
+    <div style="overflow-x:auto;">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Roll No.</th>
+            <th>Present</th>
+            <th>Absent</th>
+            <th>Total</th>
+            <th>Attendance %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in report_data %}
+          <tr>
+            <td style="color:var(--muted);">{{ forloop.counter }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                {% if r.student.photo %}
+                  <img src="{{ r.student.photo.url }}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,0.3);" alt="{{ r.student.name }}">
+                {% else %}
+                  <div style="width:34px;height:34px;border-radius:50%;background:rgba(201,168,76,0.12);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);">{{ r.student.name|first|upper }}</div>
+                {% endif %}
+                <span style="font-weight:500;">{{ r.student.name }}</span>
+                {% if r.low %}<span class="low-badge" style="margin-left:6px;">⚠ Low</span>{% endif %}
+              </div>
+            </td>
+            <td><span class="roll-badge">{{ r.student.roll_number }}</span></td>
+            <td style="color:var(--green);">{{ r.present }}</td>
+            <td style="color:var(--red);">{{ r.absent }}</td>
+            <td style="color:var(--muted);">{{ r.total }}</td>
+            <td>
+              <div class="pct-cell">
+                <div class="pct-bar"><div class="pct-fill {% if r.percentage >= threshold %}ok{% else %}low{% endif %}" style="width:{{ r.percentage }}%;"></div></div>
+                <span style="font-size:13px;font-weight:600;color:{% if r.percentage >= threshold %}var(--green){% else %}var(--red){% endif %};">{{ r.percentage }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:40px;margin-bottom:12px;">📭</div>
+      <div>No records found{% if query %} for "{{ query }}"{% endif %}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const labels = {{ labels|safe }};
+const data   = {{ percentages|safe }};
+const threshold = {{ threshold }};
+if(document.getElementById('reportChart') && labels.length){
+  new Chart(document.getElementById('reportChart'),{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Attendance %',
+        data,
+        backgroundColor: data.map(v => v >= threshold ? 'rgba(76,175,130,0.75)' : 'rgba(224,92,92,0.75)'),
+        borderRadius:6,
+        borderSkipped:false,
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#181c27',borderColor:'rgba(255,255,255,0.07)',borderWidth:1,
+          titleColor:'#f0ece4',bodyColor:'#7a7a8a',padding:12,
+          callbacks:{ label: c => `  ${c.parsed.y}%` }
+        }
+      },
+      scales:{
+        y:{min:0,max:100,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#7a7a8a',callback:v=>v+'%'},border:{color:'transparent'}},
+        x:{grid:{display:false},ticks:{color:'#7a7a8a',maxRotation:45},border:{color:'rgba(255,255,255,0.07)'}}
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

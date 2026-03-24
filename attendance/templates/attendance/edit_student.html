@@ -1,0 +1,198 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/css/intlTelInput.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
+  :root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;--red:#e05c5c;--green:#4caf82;}
+  body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+  .form-wrap{max-width:620px;margin:48px auto;padding:0 24px;}
+  .form-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;animation:fadeUp 0.5s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .form-title{font-family:'Playfair Display',serif;font-size:24px;margin-bottom:4px;}
+  .form-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+  .form-divider{height:1px;background:var(--border);margin:24px 0;}
+  .field{margin-bottom:20px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;}
+  .field input,.field select{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  .field input:focus,.field select:focus{border-color:rgba(201,168,76,0.5);box-shadow:0 0 0 3px var(--accent-glow);}
+  .field input::placeholder{color:var(--muted);}
+  .field select option{background:#111827;color:#f0ece4;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .iti{width:100%;}
+  .iti__selected-country{background:rgba(255,255,255,0.02)!important;border-right:1px solid var(--border)!important;}
+  .iti__country-list{background:#131a29!important;border:1px solid var(--border)!important;color:var(--text)!important;}
+  .iti__country.iti__highlight{background:rgba(201,168,76,0.16)!important;}
+  .iti input{padding-left:90px!important;}
+  .btn-submit{background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:14px;border:none;border-radius:10px;padding:13px 28px;cursor:pointer;transition:opacity 0.2s;}
+  .btn-submit:hover{opacity:0.9;}
+  .btn-cancel{background:rgba(255,255,255,0.06);color:var(--muted);font-size:14px;border:1px solid var(--border);border-radius:10px;padding:12px 24px;cursor:pointer;text-decoration:none;display:inline-block;}
+  .btn-cancel:hover{color:var(--text);border-color:rgba(255,255,255,0.15);}
+  .photo-preview{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
+  .photo-preview img{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,0.3);}
+  .photo-initial{width:72px;height:72px;border-radius:50%;background:rgba(201,168,76,0.12);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:var(--accent);}
+  .remove-photo{font-size:12px;color:var(--red);background:rgba(224,92,92,0.1);border:1px solid rgba(224,92,92,0.2);border-radius:6px;padding:4px 10px;cursor:pointer;}
+  .photo-upload-btn{display:flex;align-items:center;gap:8px;background:var(--input-bg);border:1px dashed rgba(201,168,76,0.3);border-radius:10px;padding:12px 14px;cursor:pointer;width:100%;}
+  .photo-upload-btn:hover{border-color:var(--accent);}
+  .photo-upload-btn input{display:none;}
+  .section-label{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:16px;}
+  .hint{font-size:11px;color:var(--muted);margin-top:5px;}
+  #passHint{font-size:11px;margin-top:5px;}
+</style>
+
+<div class="form-wrap">
+  <div class="form-card">
+    <div class="form-title">✏️ Edit Student</div>
+    <div class="form-sub">Update profile details for {{ student.name }}</div>
+
+    <form method="POST" enctype="multipart/form-data" id="editForm">
+      {% csrf_token %}
+
+      <!-- Photo -->
+      <div class="section-label">Profile Photo</div>
+      <div class="photo-preview">
+        {% if student.photo %}
+          <img src="{{ student.photo.url }}" id="photoPreview" alt="{{ student.name }} profile">
+        {% else %}
+          <div class="photo-initial" id="photoInitial">{{ student.name|first|upper }}</div>
+        {% endif %}
+        <div>
+          <label class="photo-upload-btn">
+            <input type="file" name="photo" accept="image/*" onchange="previewPhoto(this)">
+            📷 <span id="photoLabel">Change Photo</span>
+          </label>
+          {% if student.photo %}
+          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px;color:var(--muted);">
+            <input type="checkbox" name="remove_photo" style="accent-color:#e05c5c;"> Remove current photo
+          </label>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <!-- Basic Info -->
+      <div class="section-label">Basic Information</div>
+      <div class="row2">
+        <div class="field">
+          <label for="editName">Full Name *</label>
+          <input id="editName" type="text" name="name" value="{{ student.name }}" required>
+        </div>
+        <div class="field">
+          <label for="editRoll">Roll Number *</label>
+          <input id="editRoll" type="text" name="roll" value="{{ student.roll_number }}" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="editEmail">Email Address *</label>
+        <input id="editEmail" type="email" name="email" value="{{ student.email }}" required>
+      </div>
+      <div class="field">
+        <label for="editClassSection">Class</label>
+        <select id="editClassSection" name="class_section">
+          <option value="">-- Not Assigned --</option>
+          {% for cls in classes %}
+            <option value="{{ cls.id }}" {% if student.class_section_id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="editPhone">Phone</label>
+          <input id="editPhone" class="js-intl-phone" type="tel" name="phone" value="{{ student.phone|default:'' }}" placeholder="e.g. +91 9876543210">
+        </div>
+        <div class="field">
+          <label for="editParentPhone">Parent Phone</label>
+          <input id="editParentPhone" class="js-intl-phone" type="tel" name="parent_phone" value="{{ student.parent_phone|default:'' }}" placeholder="e.g. +91 9876543210">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="editGender">Gender</label>
+        <select id="editGender" name="gender">
+          <option value="">Select gender</option>
+          <option value="Male" {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
+          <option value="Female" {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
+          <option value="Other" {% if student.gender == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <!-- Password Change -->
+      <div class="section-label">Change Password <span style="font-weight:400;color:var(--muted);">(optional)</span></div>
+      <div class="field">
+        <label for="newPass">New Password</label>
+        <input type="password" name="new_password" id="newPass" placeholder="Leave blank to keep current password">
+        <div id="passHint" class="hint">Leave blank to keep existing password</div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <button type="submit" class="btn-submit">💾 Save Changes</button>
+        <a href="{% if request.session.role == 'teacher' %}{% url 'students' %}{% else %}{% url 'student_dashboard' %}{% endif %}" class="btn-cancel">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/intlTelInput.min.js"></script>
+<script>
+const phoneInstances = [];
+
+function initIntlPhones(){
+  if (!window.intlTelInput) return;
+  document.querySelectorAll('.js-intl-phone').forEach(function(input){
+    const iti = window.intlTelInput(input, {
+      initialCountry: 'in',
+      nationalMode: false,
+      autoPlaceholder: 'aggressive',
+      formatOnDisplay: true,
+      utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/utils.js'
+    });
+    phoneInstances.push({ input: input, iti: iti });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  // Restore scroll position after page reload
+  const savedScroll = sessionStorage.getItem('editFormScrollPos');
+  if(savedScroll){
+    window.scrollTo(0, parseInt(savedScroll, 10));
+    sessionStorage.removeItem('editFormScrollPos');
+  }
+
+  initIntlPhones();
+});
+
+function previewPhoto(input){
+  if(input.files && input.files[0]){
+    const reader = new FileReader();
+    reader.onload = e => {
+      const el = document.getElementById('photoPreview') || document.getElementById('photoInitial');
+      if(el.tagName === 'IMG'){ el.src = e.target.result; }
+      else { el.innerHTML = `<img src="${e.target.result}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;">`; }
+    };
+    reader.readAsDataURL(input.files[0]);
+    document.getElementById('photoLabel').textContent = input.files[0].name;
+  }
+}
+
+document.getElementById('editForm').addEventListener('submit', function(){
+  phoneInstances.forEach(function(item){
+    if (item.input.value.trim()) {
+      item.input.value = item.iti.getNumber();
+    }
+  });
+  // Save scroll position before form submission
+  sessionStorage.setItem('editFormScrollPos', window.scrollY.toString());
+});
+
+document.getElementById('newPass').addEventListener('input', function(){
+  const hint = document.getElementById('passHint');
+  const len  = this.value.length;
+  if(!len){ hint.style.color=''; hint.textContent='Leave blank to keep existing password'; }
+  else if(len < 6){ hint.style.color='#e05c5c'; hint.textContent=`Too short — ${6-len} more needed`; }
+  else{ hint.style.color='#4caf82'; hint.textContent='✓ Password looks good'; }
+});
+</script>
+{% endblock %}

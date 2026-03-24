@@ -1,0 +1,48 @@
+{% extends "attendance/base.html" %}
+{% block title %}{% if edit %}Edit{% else %}Add{% endif %} Teacher — EduTrack{% endblock %}
+{% block content %}
+<style>
+:root{--bg:#0b0f19;--card:#111827;--border:rgba(255,255,255,0.07);--accent:#c9a84c;--accent-glow:rgba(201,168,76,0.18);--text:#f0ece4;--muted:#7a7a8a;--input-bg:#1e2230;}
+body{background:var(--bg)!important;font-family:'DM Sans',sans-serif!important;color:var(--text)!important;}
+.wrap{max-width:560px;margin:48px auto;padding:0 24px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;animation:fadeUp .5s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.title{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:4px;color:var(--text);font-weight:600;}
+.sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px;}
+.field input{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;}
+.field input:focus{border-color:rgba(201,168,76,.5);box-shadow:0 0 0 3px var(--accent-glow);}
+.field input::placeholder{color:var(--muted);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.check-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;cursor:pointer;}
+.check-row input{accent-color:var(--accent);width:16px;height:16px;}
+.check-row span{font-size:13px;color:var(--text);}
+.btn-submit{width:100%;background:linear-gradient(135deg,#c9a84c,#f0d080);color:#0b0f19;font-weight:700;font-size:14px;border:none;border-radius:10px;padding:13px;cursor:pointer;margin-top:8px;}
+.btn-cancel{display:block;text-align:center;margin-top:12px;color:var(--muted);font-size:13px;text-decoration:none;}
+.btn-cancel:hover{color:var(--accent);}
+.divider{height:1px;background:var(--border);margin:20px 0;}
+</style>
+<div class="wrap">
+  <div class="card">
+    <div class="title">{% if edit %}✏️ Edit Teacher{% else %}➕ Add Teacher{% endif %}</div>
+    <div class="sub">{% if edit %}Update teacher account details{% else %}Create a new teacher account{% endif %}</div>
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row2">
+        <div class="field"><label for="teacherName">Full Name *</label><input id="teacherName" type="text" name="name" value="{{ teacher.name|default:'' }}" required placeholder="e.g. Prof. Sharma"></div>
+        <div class="field"><label for="teacherUsername">Username *</label><input id="teacherUsername" type="text" name="username" value="{{ teacher.username|default:'' }}" {% if edit %}readonly style="opacity:.6"{% endif %} required placeholder="e.g. sharma_t"></div>
+      </div>
+      <div class="field"><label for="teacherEmail">Email</label><input id="teacherEmail" type="email" name="email" value="{{ teacher.email|default:'' }}" placeholder="teacher@school.edu"></div>
+      <div class="field"><label for="teacherPassword">{% if edit %}New Password (leave blank to keep){% else %}Password *{% endif %}</label><input id="teacherPassword" type="password" name="password" {% if not edit %}required{% endif %} placeholder="Min. 6 characters"></div>
+      <div class="divider"></div>
+      <label class="check-row">
+        <input type="checkbox" name="is_admin" {% if teacher.is_admin %}checked{% endif %}>
+        <span>👑 Grant Admin Access (can manage teachers & system settings)</span>
+      </label>
+      <button type="submit" class="btn-submit">{% if edit %}💾 Update Teacher{% else %}✅ Create Teacher{% endif %}</button>
+    </form>
+    <a href="{% url 'teachers' %}" class="btn-cancel">← Back to Teachers</a>
+  </div>
+</div>
+{% endblock %}

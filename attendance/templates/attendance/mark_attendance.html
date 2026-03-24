@@ -1,0 +1,408 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --card: #181c27;
+    --border: rgba(255,255,255,0.07);
+    --accent: #c9a84c;
+    --accent-glow: rgba(201,168,76,0.18);
+    --text: #f0ece4;
+    --muted: #7a7a8a;
+    --input-bg: #1e2230;
+    --green: #4caf82;
+    --red: #e05c5c;
+    --blue: #5b8dee;
+  }
+
+  body {
+    background: var(--bg) !important;
+    font-family: 'DM Sans', sans-serif !important;
+    color: var(--text) !important;
+    min-height: 100vh;
+  }
+
+  .att-wrapper { max-width: 1000px; margin: 0 auto; padding: 48px 24px; }
+
+  /* ── Header ── */
+  .att-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+  .att-header h1 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text); letter-spacing: -0.3px; margin: 0; }
+  .att-header p { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+  .lecture-picker { margin-top: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .lecture-picker label { font-size: 12px; color: var(--muted); }
+  .lecture-picker select {
+    min-width: 300px;
+    max-width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 13px;
+    padding: 9px 12px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── Mini Stats ── */
+  .mini-stats { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; animation: fadeUp 0.5s 0.1s cubic-bezier(0.16,1,0.3,1) both; }
+  .mini-stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; min-width: 110px; flex: 1; }
+  .mini-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .mini-stat-value { font-size: 28px; font-weight: 600; line-height: 1; }
+  .mini-stat-value.gold  { color: var(--accent); }
+  .mini-stat-value.green { color: var(--green);  }
+  .mini-stat-value.red   { color: var(--red);    }
+  .mini-stat-value.muted { color: var(--muted);  }
+
+  /* ── Card ── */
+  .att-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; animation: fadeUp 0.5s 0.2s cubic-bezier(0.16,1,0.3,1) both; position: relative; }
+  .att-card::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+
+  /* ── Card Header ── */
+  .att-card-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); }
+  .att-card-title { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--text); }
+  .att-card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Search ── */
+  .search-box { display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; gap: 8px; width: 220px; transition: border-color 0.2s, box-shadow 0.2s; }
+  .search-box:focus-within { border-color: rgba(201,168,76,0.4); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .search-icon { font-size: 14px; }
+  .search-input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif; width: 100%; }
+  .search-input::placeholder { color: var(--muted); }
+
+  /* ── Table ── */
+  .att-table { width: 100%; border-collapse: collapse; }
+  .att-table thead th { padding: 12px 24px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border); text-align: left; font-weight: 500; }
+  .att-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
+  .att-table tbody tr:last-child { border-bottom: none; }
+  .att-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .att-table tbody td { padding: 14px 24px; font-size: 14px; color: var(--text); vertical-align: middle; }
+
+  /* ── Avatar ── */
+  .name-cell { display: flex; align-items: center; gap: 10px; }
+  .avatar-btn { background: transparent; border: none; padding: 0; cursor: pointer; display: inline-flex; border-radius: 50%; }
+  .avatar-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .student-link { color: var(--text); text-decoration: none; display: inline-flex; }
+  .student-link:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .student-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .av-0 { background: rgba(201,168,76,0.18); color: #c9a84c; }
+  .av-1 { background: rgba(76,175,130,0.15); color: #4caf82; }
+  .av-2 { background: rgba(91,141,238,0.15); color: #5b8dee; }
+  .av-3 { background: rgba(224,92,92,0.15);  color: #e05c5c; }
+  .av-4 { background: rgba(160,96,200,0.15); color: #a060c8; }
+
+  /* ── Roll Badge ── */
+  .roll-badge { background: var(--accent-glow); border: 1px solid rgba(201,168,76,0.25); border-radius: 20px; padding: 3px 12px; font-size: 12px; color: var(--accent); font-weight: 500; }
+
+  /* ── Buttons ── */
+  .btn-present, .btn-absent { padding: 7px 18px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid; cursor: pointer; transition: opacity 0.2s, transform 0.15s, background 0.2s, box-shadow 0.2s; font-family: 'DM Sans', sans-serif; letter-spacing: 0.3px; }
+  .btn-present { background: rgba(76,175,130,0.12); color: var(--green); border-color: rgba(76,175,130,0.35); }
+  .btn-present:hover { background: rgba(76,175,130,0.25); transform: translateY(-1px); }
+  .btn-present.active { background: var(--green); color: #0f1117; border-color: var(--green); box-shadow: 0 4px 16px rgba(76,175,130,0.35); }
+  .btn-absent { background: rgba(224,92,92,0.12); color: var(--red); border-color: rgba(224,92,92,0.35); }
+  .btn-absent:hover { background: rgba(224,92,92,0.25); transform: translateY(-1px); }
+  .btn-absent.active { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 4px 16px rgba(224,92,92,0.35); }
+
+  /* ── Row highlight ── */
+  .att-table tbody tr.row-present { background: rgba(76,175,130,0.06) !important; }
+  .att-table tbody tr.row-absent  { background: rgba(224,92,92,0.06)  !important; }
+
+  /* ── Status Badge ── */
+  .status-badge { padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.3px; }
+  .status-badge.present { background: rgba(76,175,130,0.15); color: var(--green); border: 1px solid rgba(76,175,130,0.3); }
+  .status-badge.absent  { background: rgba(224,92,92,0.15);  color: var(--red);   border: 1px solid rgba(224,92,92,0.3);  }
+  .status-badge.pending { color: var(--muted); font-size: 12px; }
+
+  .empty-row td { text-align: center; padding: 48px; color: var(--muted); font-size: 14px; }
+
+  /* ── Photo Modal ── */
+  .photo-modal { position: fixed; inset: 0; background: rgba(5,8,14,0.78); display: none; align-items: center; justify-content: center; z-index: 12000; padding: 20px; }
+  .photo-modal.open { display: flex; }
+  .photo-modal-card { background: #141a25; border: 1px solid var(--border); border-radius: 14px; max-width: 420px; width: 100%; padding: 16px; box-shadow: 0 24px 48px rgba(0,0,0,0.45); }
+  .photo-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .photo-modal-title { font-size: 14px; color: var(--text); font-weight: 600; }
+  .photo-close { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; width: 30px; height: 30px; cursor: pointer; }
+  .photo-close:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .photo-preview { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); background: #0d1119; }
+  .photo-empty { display: none; text-align: center; color: var(--muted); font-size: 13px; padding: 28px 8px; border: 1px dashed var(--border); border-radius: 10px; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="att-wrapper">
+
+  <!-- Header -->
+  <div class="att-header">
+    <div>
+      <h1>Mark Attendance</h1>
+      <p>Saved instantly — previous marks reload automatically</p>
+      <form method="get" class="lecture-picker">
+        <label for="lectureSelect">Lecture</label>
+        <select id="lectureSelect" name="lecture_id" onchange="this.form.submit()">
+          {% if lectures_today %}
+            {% for lecture in lectures_today %}
+              <option value="{{ lecture.id }}" {% if selected_lecture and selected_lecture.id == lecture.id %}selected{% endif %}>
+                {{ lecture.class_section }} · {{ lecture.subject.name }} · {{ lecture.start_time|time:"H:i" }}-{{ lecture.end_time|time:"H:i" }}
+              </option>
+            {% endfor %}
+          {% else %}
+            <option value="">No lecture found for {{ today_day }}</option>
+          {% endif %}
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mini Stats -->
+  <div class="mini-stats">
+    <div class="mini-stat">
+      <div class="mini-stat-label">Total</div>
+      <div class="mini-stat-value gold" id="statTotal">{{ students|length }}</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-label">Present</div>
+      <div class="mini-stat-value green" id="statPresent">{{ present_today }}</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-label">Absent</div>
+      <div class="mini-stat-value red" id="statAbsent">{{ absent_today }}</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-label">Pending</div>
+      <div class="mini-stat-value muted" id="statPending">{{ pending_today }}</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="att-card">
+    <div class="att-card-header">
+      <div>
+        <div class="att-card-title">Student List</div>
+        <div class="att-card-sub">
+          Today's attendance — {{ today }}
+          {% if selected_lecture %}
+            · {{ selected_lecture.class_section }} · {{ selected_lecture.subject.name }}
+            ({{ selected_lecture.start_time|time:"H:i" }}-{{ selected_lecture.end_time|time:"H:i" }})
+          {% endif %}
+        </div>
+      </div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search student..." onkeyup="liveSearch()">
+      </div>
+    </div>
+
+    <table class="att-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student</th>
+          <th>Roll No</th>
+          <th>Present</th>
+          <th>Absent</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="studentTable">
+        {% for student in students %}
+        {% with status=student.today_status counter=forloop.counter0 %}
+        <tr id="row-{{ student.id }}" class="{% if status == 'Present' %}row-present{% elif status == 'Absent' %}row-absent{% endif %}">
+          <td style="color:var(--muted);font-size:12px;">{{ forloop.counter }}</td>
+          <td>
+            <div class="name-cell">
+              <button
+                type="button"
+                class="avatar-btn"
+                onclick="openPhotoModal('{{ student.name|escapejs }}', '{% if student.photo %}{{ student.photo.url|escapejs }}{% endif %}')"
+                title="Open student photo">
+                {% if student.photo %}
+                  <img src="{{ student.photo.url }}" class="student-avatar" alt="{{ student.name }} profile" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,0.3);">
+                {% else %}
+                  <div class="student-avatar" id="av-{{ student.id }}" data-name="{{ student.name }}"></div>
+                {% endif %}
+              </button>
+              <a href="{% url 'edit_student' student.id %}" class="student-link" title="Open student details">{{ student.name }}</a>
+            </div>
+          </td>
+          <td><span class="roll-badge">{{ student.roll_number }}</span></td>
+          <td>
+            <button
+              class="btn-present {% if status == 'Present' %}active{% endif %}"
+              id="present-{{ student.id }}"
+              onclick="markAttendance({{ student.id }}, 'Present', this)">
+              ✓ Present
+            </button>
+          </td>
+          <td>
+            <button
+              class="btn-absent {% if status == 'Absent' %}active{% endif %}"
+              id="absent-{{ student.id }}"
+              onclick="markAttendance({{ student.id }}, 'Absent', this)">
+              ✗ Absent
+            </button>
+          </td>
+          <td id="status-{{ student.id }}">
+            {% if status == 'Present' %}
+              <span class="status-badge present">✅ Present</span>
+            {% elif status == 'Absent' %}
+              <span class="status-badge absent">❌ Absent</span>
+            {% else %}
+              <span class="status-badge pending">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr class="empty-row"><td colspan="6">No students found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="photoModal" class="photo-modal" onclick="closePhotoModal(event)">
+  <div class="photo-modal-card">
+    <div class="photo-modal-header">
+      <div id="photoModalTitle" class="photo-modal-title">Student Photo</div>
+      <button type="button" class="photo-close" onclick="closePhotoModal()">x</button>
+    </div>
+    <img id="photoPreview" class="photo-preview" alt="Student photo">
+    <div id="photoEmpty" class="photo-empty">No profile photo uploaded for this student.</div>
+  </div>
+</div>
+
+<script>
+  // ── FIX 1: Set avatar initials for placeholders only (skip images) ──
+  const avatarColors = ['av-0','av-1','av-2','av-3','av-4'];
+  document.querySelectorAll('[id^="av-"]').forEach(function(el, idx) {
+    const fullName = el.getAttribute('data-name') || '';
+    const parts = fullName.trim().split(' ').filter(Boolean);
+    const initials = parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : (parts[0] ? parts[0].slice(0, 2).toUpperCase() : '?');
+    el.textContent = initials;
+    el.className = 'student-avatar ' + avatarColors[idx % 5];
+  });
+
+  // ── FIX 2: Live counters seeded from Django context ──
+  let presentCount = parseInt(document.getElementById('statPresent').textContent) || 0;
+  let absentCount  = parseInt(document.getElementById('statAbsent').textContent)  || 0;
+  const totalCount = parseInt(document.getElementById('statTotal').textContent)   || 0;
+
+  // ── FIX 3: Get CSRF token so Django accepts the request and SAVES it ──
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(function(cookie) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        }
+      });
+    }
+    return cookieValue;
+  }
+
+  // ── AJAX mark attendance — NO page reload, NO scroll jump ──
+  function markAttendance(studentId, status, btn) {
+    const lectureId = '{{ lecture_id|escapejs }}';
+    let url = '/mark/' + studentId + '/' + status + '/';
+    if (lectureId) {
+      url += '?lecture_id=' + encodeURIComponent(lectureId);
+    }
+
+    fetch(url, {
+      method: 'POST',                              // POST so Django saves properly
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken'),     // CSRF token — required to save!
+      }
+    })
+    .then(function(response) {
+      if (response.ok) {
+        const row        = document.getElementById('row-' + studentId);
+        const presentBtn = document.getElementById('present-' + studentId);
+        const absentBtn  = document.getElementById('absent-'  + studentId);
+        const statusCell = document.getElementById('status-'  + studentId);
+
+        const wasPresent = presentBtn.classList.contains('active');
+        const wasAbsent  = absentBtn.classList.contains('active');
+
+        // Reset
+        presentBtn.classList.remove('active');
+        absentBtn.classList.remove('active');
+        row.classList.remove('row-present', 'row-absent');
+        if (wasPresent) presentCount--;
+        if (wasAbsent)  absentCount--;
+
+        // Apply new
+        if (status === 'Present') {
+          presentBtn.classList.add('active');
+          row.classList.add('row-present');
+          statusCell.innerHTML = '<span class="status-badge present">✅ Present</span>';
+          presentCount++;
+        } else {
+          absentBtn.classList.add('active');
+          row.classList.add('row-absent');
+          statusCell.innerHTML = '<span class="status-badge absent">❌ Absent</span>';
+          absentCount++;
+        }
+
+        document.getElementById('statPresent').textContent = presentCount;
+        document.getElementById('statAbsent').textContent  = absentCount;
+        document.getElementById('statPending').textContent = totalCount - presentCount - absentCount;
+
+      } else {
+        alert('Error ' + response.status + ': Failed to save. Please try again.');
+      }
+    })
+    .catch(function() {
+      alert('Network error. Please check your connection.');
+    });
+  }
+
+  // ── Live search ──
+  function liveSearch() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    document.querySelectorAll("#studentTable tr").forEach(function(row) {
+      row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+    });
+  }
+
+  function openPhotoModal(studentName, photoUrl) {
+    const modal = document.getElementById('photoModal');
+    const title = document.getElementById('photoModalTitle');
+    const image = document.getElementById('photoPreview');
+    const empty = document.getElementById('photoEmpty');
+
+    title.textContent = studentName + ' - Profile Photo';
+
+    if (photoUrl && photoUrl.trim() !== '') {
+      image.src = photoUrl;
+      image.style.display = 'block';
+      empty.style.display = 'none';
+    } else {
+      image.removeAttribute('src');
+      image.style.display = 'none';
+      empty.style.display = 'block';
+    }
+
+    modal.classList.add('open');
+  }
+
+  function closePhotoModal(event) {
+    const modal = document.getElementById('photoModal');
+    if (!event || event.target === modal) {
+      modal.classList.remove('open');
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.getElementById('photoModal').classList.remove('open');
+    }
+  });
+</script>
+
+{% endblock %}
