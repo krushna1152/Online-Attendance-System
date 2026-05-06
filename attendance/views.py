@@ -414,6 +414,134 @@ def student_register(request):
         "classes": ClassSection.objects.all()
     })
 
+
+def register_admin(request):
+    """Register an application-level admin (Teacher with is_admin=True)."""
+    if request.method == "POST":
+        name     = request.POST.get("name", "").strip()
+        email    = request.POST.get("email", "").strip()
+        mobile   = request.POST.get("mobile", "").strip()
+        username = request.POST.get("username", "").strip()
+        pwd      = request.POST.get("password", "")
+        cpwd     = request.POST.get("confirm_password", "")
+
+        errors = []
+        if not name:     errors.append("Full name is required.")
+        if not email:    errors.append("Email is required.")
+        if not username: errors.append("Username is required.")
+        if len(pwd) < 6: errors.append(PASSWORD_MIN_MSG)
+        if pwd != cpwd:  errors.append("Passwords do not match.")
+        if Teacher.objects.filter(username=username).exists():
+            errors.append(f"Username '{username}' is already taken.")
+        if Teacher.objects.filter(email=email).exists():
+            errors.append(f"Email '{email}' is already registered.")
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            return render(request, "attendance/register_admin.html", {"form_data": request.POST})
+
+        admin = Teacher(name=name, username=username, email=email, mobile=mobile, is_admin=True)
+        admin.set_password(pwd)
+        admin.save()
+        log_activity(request, "add", f"Admin '{name}' registered")
+        messages.success(request, "Admin registered successfully! You can now login.")
+        return redirect("teacher_login")
+
+    return render(request, "attendance/register_admin.html")
+
+
+def register_teacher(request):
+    """Register a new teacher account."""
+    if request.method == "POST":
+        name          = request.POST.get("name", "").strip()
+        email         = request.POST.get("email", "").strip()
+        mobile        = request.POST.get("mobile", "").strip()
+        teacher_id    = request.POST.get("teacher_id", "").strip()
+        username      = request.POST.get("username", "").strip()
+        subject       = request.POST.get("subject", "").strip()
+        department    = request.POST.get("department", "").strip()
+        qualification = request.POST.get("qualification", "").strip()
+        experience    = request.POST.get("experience", "").strip()
+        pwd           = request.POST.get("password", "")
+        cpwd          = request.POST.get("confirm_password", "")
+
+        errors = []
+        if not name:     errors.append("Full name is required.")
+        if not email:    errors.append("Email is required.")
+        if not username: errors.append("Username is required.")
+        if len(pwd) < 6: errors.append(PASSWORD_MIN_MSG)
+        if pwd != cpwd:  errors.append("Passwords do not match.")
+        if Teacher.objects.filter(username=username).exists():
+            errors.append(f"Username '{username}' is already taken.")
+        if Teacher.objects.filter(email=email).exists():
+            errors.append(f"Email '{email}' is already registered.")
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            return render(request, "attendance/register_teacher.html", {"form_data": request.POST})
+
+        teacher = Teacher(
+            name=name, username=username, email=email,
+            mobile=mobile, teacher_id=teacher_id,
+            subject=subject, department=department,
+            qualification=qualification, experience=experience,
+            is_admin=False,
+        )
+        teacher.set_password(pwd)
+        teacher.save()
+        log_activity(request, "add", f"Teacher '{name}' self-registered")
+        messages.success(request, "Teacher registered successfully! You can now login.")
+        return redirect("teacher_login")
+
+    return render(request, "attendance/register_teacher.html")
+
+
+def register_student(request):
+    """Register a new student account with full form."""
+    if request.method == "POST":
+        name       = request.POST.get("name", "").strip()
+        roll       = request.POST.get("roll_number", "").strip()
+        email      = request.POST.get("email", "").strip()
+        mobile     = request.POST.get("mobile", "").strip()
+        cs_id      = request.POST.get("class_section", "")
+        division   = request.POST.get("division", "").strip()
+        pwd        = request.POST.get("password", "")
+        cpwd       = request.POST.get("confirm_password", "")
+
+        errors = []
+        if not name:  errors.append("Full name is required.")
+        if not roll:  errors.append("Roll number is required.")
+        if not email: errors.append("Email is required.")
+        if len(pwd) < 6: errors.append(PASSWORD_MIN_MSG)
+        if pwd != cpwd:  errors.append("Passwords do not match.")
+        if Student.objects.filter(roll_number=roll).exists():
+            errors.append(f"Roll number '{roll}' is already registered.")
+        if Student.objects.filter(email=email).exists():
+            errors.append(f"Email '{email}' is already registered.")
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            return render(request, "attendance/register_student.html", {
+                "classes": ClassSection.objects.all(), "form_data": request.POST
+            })
+
+        student = Student(roll_number=roll, name=name, email=email, phone=mobile)
+        student.set_password(pwd)
+        if cs_id:
+            student.class_section_id = cs_id
+        student.save()
+        log_activity(request, "add", f"Student '{name}' registered (roll: {roll})")
+        messages.success(request, "Registration successful! You can now login.")
+        return redirect("student_login")
+
+    return render(request, "attendance/register_student.html", {
+        "classes": ClassSection.objects.all()
+    })
+
+
 @teacher_required
 def add_student(request):
     classes = ClassSection.objects.all()

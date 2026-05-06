@@ -35,6 +35,11 @@ urlpatterns = [
     path('bulk-import/', views.bulk_import_students, name='bulk_import_students'),
     path('register/', views.student_register, name='student_register'),
 
+    # ── Public Registration Pages ─────────────────────────────────────────
+    path('register/admin/', views.register_admin, name='register_admin'),
+    path('register/teacher/', views.register_teacher, name='register_teacher'),
+    path('register/student/', views.register_student, name='register_student'),
+
     # ── Teacher Management ────────────────────────────────────────────────
     path('teachers/', views.teachers, name='teachers'),
     path('add-teacher/', views.add_teacher, name='add_teacher'),
