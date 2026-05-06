@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Registration — Attendance System</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="reg-card">
+
+    <a href="{% url 'login' %}" class="back-link">← Back</a>
+
+    <div class="logo-wrap">
+      <div class="logo-icon">🎓</div>
+    </div>
+
+    <h1 class="reg-title">Student Registration</h1>
+    <div class="role-badge">📖 Create your student account</div>
+
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'success' %}
+          <div class="success-msg">✔ {{ message }}</div>
+        {% else %}
+          <div class="error-msg">⚠ {{ message }}</div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    <form method="POST" action="{% url 'register_student' %}">
+      {% csrf_token %}
+
+      <div class="form-grid">
+
+        <div class="form-group full">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-input"
+                 placeholder="Enter full name" required
+                 value="{{ form_data.name|default:'' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Roll Number</label>
+          <input type="text" name="roll_number" class="form-input"
+                 placeholder="e.g. 2024001" required
+                 value="{{ form_data.roll_number|default:'' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-input"
+                 placeholder="Enter email address" required
+                 value="{{ form_data.email|default:'' }}">
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Mobile Number</label>
+          <input type="tel" name="mobile" class="form-input"
+                 placeholder="Enter mobile number"
+                 value="{{ form_data.mobile|default:'' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Class</label>
+          {% if classes %}
+            <select name="class_section" class="form-select">
+              <option value="">— Select Class —</option>
+              {% for cs in classes %}
+                <option value="{{ cs.id }}"
+                  {% if form_data.class_section == cs.id|stringformat:"s" %}selected{% endif %}>
+                  {{ cs.name }}{% if cs.section %} — {{ cs.section }}{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input type="text" name="class_name" class="form-input"
+                   placeholder="Enter class name"
+                   value="{{ form_data.class_name|default:'' }}">
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Division</label>
+          <input type="text" name="division" class="form-input"
+                 placeholder="e.g. A, B, C"
+                 value="{{ form_data.division|default:'' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrap">
+            <input type="password" name="password" id="pwField" class="form-input"
+                   placeholder="Min. 6 characters" required autocomplete="new-password">
+            <button type="button" class="toggle-pw" onclick="togglePw('pwField','togglePw1')" id="togglePw1">👁</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <div class="input-wrap">
+            <input type="password" name="confirm_password" id="cpwField" class="form-input"
+                   placeholder="Repeat password" required autocomplete="new-password">
+            <button type="button" class="toggle-pw" onclick="togglePw('cpwField','togglePw2')" id="togglePw2">👁</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button type="submit" class="btn-submit">Register as Student</button>
+    </form>
+
+    <div class="reg-footer">
+      Already have an account? <a href="{% url 'student_login' %}">Login →</a>
+    </div>
+
+  </div>
+
+  <script>
+    function togglePw(fieldId, btnId) {
+      const f = document.getElementById(fieldId);
+      const b = document.getElementById(btnId);
+      if (f.type === 'password') { f.type = 'text'; b.textContent = '🙈'; }
+      else { f.type = 'password'; b.textContent = '👁'; }
+    }
+  </script>
+
+</body>
+</html>

@@ -7,13 +7,19 @@ from django.utils import timezone
 # TEACHER MODEL
 # ══════════════════════════════════════════════════════════
 class Teacher(models.Model):
-    name     = models.CharField(max_length=100)
-    username = models.CharField(max_length=50, unique=True)
-    email    = models.EmailField(unique=True, null=True, blank=True)
-    password = models.CharField(max_length=256)
-    is_admin = models.BooleanField(default=False)
-    photo    = models.ImageField(upload_to='teachers/', blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    name          = models.CharField(max_length=100)
+    username      = models.CharField(max_length=50, unique=True)
+    email         = models.EmailField(unique=True, null=True, blank=True)
+    password      = models.CharField(max_length=256)
+    is_admin      = models.BooleanField(default=False)
+    photo         = models.ImageField(upload_to='teachers/', blank=True, null=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+    mobile        = models.CharField(max_length=15, blank=True, default='')
+    teacher_id    = models.CharField(max_length=30, blank=True, default='')
+    subject       = models.CharField(max_length=100, blank=True, default='')
+    department    = models.CharField(max_length=100, blank=True, default='')
+    qualification = models.CharField(max_length=100, blank=True, default='')
+    experience    = models.CharField(max_length=50, blank=True, default='')
 
     def set_password(self, raw):
         self.password = make_password(raw)

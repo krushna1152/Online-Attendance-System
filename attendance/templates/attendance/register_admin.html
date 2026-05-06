@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Registration — Attendance System</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙</text></svg>">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="reg-card">
+
+    <a href="{% url 'login' %}" class="back-link">← Back</a>
+
+    <div class="logo-wrap">
+      <div class="logo-icon">⚙</div>
+    </div>
+
+    <h1 class="reg-title">Admin Registration</h1>
+    <div class="role-badge">🛡 Application admin account</div>
+
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'success' %}
+          <div class="success-msg">✔ {{ message }}</div>
+        {% else %}
+          <div class="error-msg">⚠ {{ message }}</div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    <form method="POST" action="{% url 'register_admin' %}">
+      {% csrf_token %}
+
+      <div class="form-grid">
+
+        <div class="form-group full">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-input"
+                 placeholder="Enter full name" required
+                 value="{{ form_data.name|default:'' }}">
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-input"
+                 placeholder="Enter email address" required
+                 value="{{ form_data.email|default:'' }}">
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Mobile Number</label>
+          <input type="tel" name="mobile" class="form-input"
+                 placeholder="Enter mobile number"
+                 value="{{ form_data.mobile|default:'' }}">
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-input"
+                 placeholder="Choose a username" required autocomplete="username"
+                 value="{{ form_data.username|default:'' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrap">
+            <input type="password" name="password" id="pwField" class="form-input"
+                   placeholder="Min. 6 characters" required autocomplete="new-password">
+            <button type="button" class="toggle-pw" onclick="togglePw('pwField','togglePw1')" id="togglePw1">👁</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <div class="input-wrap">
+            <input type="password" name="confirm_password" id="cpwField" class="form-input"
+                   placeholder="Repeat password" required autocomplete="new-password">
+            <button type="button" class="toggle-pw" onclick="togglePw('cpwField','togglePw2')" id="togglePw2">👁</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button type="submit" class="btn-submit">Register as Admin</button>
+    </form>
+
+    <div class="reg-footer">
+      Already have an account? <a href="{% url 'teacher_login' %}">Login →</a>
+    </div>
+
+  </div>
+
+  <script>
+    function togglePw(fieldId, btnId) {
+      const f = document.getElementById(fieldId);
+      const b = document.getElementById(btnId);
+      if (f.type === 'password') { f.type = 'text'; b.textContent = '🙈'; }
+      else { f.type = 'password'; b.textContent = '👁'; }
+    }
+  </script>
+
+</body>
+</html>
