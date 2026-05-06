@@ -90,15 +90,9 @@
 
         <div class="form-group">
           <label class="form-label">Division</label>
-          {% if classes %}
-            <input type="text" name="division" class="form-input"
-                   placeholder="e.g. A, B, C"
-                   value="{{ form_data.division|default:'' }}">
-          {% else %}
-            <input type="text" name="division" class="form-input"
-                   placeholder="e.g. A, B, C"
-                   value="{{ form_data.division|default:'' }}">
-          {% endif %}
+          <input type="text" name="division" class="form-input"
+                 placeholder="e.g. A, B, C"
+                 value="{{ form_data.division|default:'' }}">
         </div>
 
         <div class="form-group">
